@@ -14,13 +14,13 @@ and open the template in the editor.
 
             #viewerDiv {
                 margin : auto auto;
-                width: 100%;
+                width: 50%;
                 height: 100%;
                 padding: 0;
                 /*margin-top: 50vh;
                 transform: translateY(-50%);*/
             }
-            #menuDiv {position: absolute; top:0px; margin-left: 0px;}
+            /* #menuDiv {position: absolute; top:0px; margin-left: 0px;}*/
 
 
         </style>
@@ -31,9 +31,9 @@ and open the template in the editor.
     </head>
     <body>
         <div id="viewerDiv"></div>
-        <script src="examples/GUI/GuiTools.js"></script>
+        <!--script src="examples/GUI/GuiTools.js"></script-->
         <script src="dist/itowns.js"></script>
-        <script src="dist/debug.js"></script>
+        <!--script src="dist/debug.js"></script-->
         <script type="text/javascript">
 
             /* global itowns,document,GuiTools*/
@@ -42,34 +42,199 @@ and open the template in the editor.
 
             // iTowns namespace defined here
             const viewerDiv = document.getElementById('viewerDiv');
-            const menuGlobe = new GuiTools(itowns.viewer, 'menuDiv');
+            // const menuGlobe = new GuiTools(itowns.viewer, 'menuDiv');
 
             const globeLayer = itowns.viewer.createSceneGlobe('globe', positionOnGlobe, viewerDiv);
-            itowns.debug = new Debug(itowns.viewer.scene);
+            // itowns.debug = new Debug(itowns.viewer.scene);
 
-            const urlImageryLayers = [];
-            const urlElevationLayers = [];
-            const urlFeatureLayersArray = [];
+            // const urlImageryLayers = [];
+            // const urlElevationLayers = [];
+            // const urlFeatureLayersArray = [];
 
-            urlImageryLayers.push('examples/layers/JSONLayers/Ortho.json');
+            var orthoLayer = {
+               type:       "color",
+               protocol:   "wmts",
+               id:         "Ortho",
+               url:        "http://wxs.ign.fr/va5orxd0pgzvq3jxutqfuy0b/geoportail/wmts",
+               updateStrategy: {
+                   type: "0",
+                   options: {}
+               },
+               networkOptions : {
+                   crossOrigin : "omit"
+               },
+               options: {
+                   name: "ORTHOIMAGERY.ORTHOPHOTOS",
+                   mimetype: "image/jpeg",
+                   tileMatrixSet: "PM",
+                   tileMatrixSetLimits: {
+                       "2": {
+                           "minTileRow": 0,
+                           "maxTileRow": 4,
+                           "minTileCol": 0,
+                           "maxTileCol": 4
+                       },
+                       "3": {
+                           "minTileRow": 0,
+                           "maxTileRow": 8,
+                           "minTileCol": 0,
+                           "maxTileCol": 8
+                       },
+                       "4": {
+                           "minTileRow": 0,
+                           "maxTileRow": 6,
+                           "minTileCol": 0,
+                           "maxTileCol": 16
+                       },
+                       "5": {
+                           "minTileRow": 0,
+                           "maxTileRow": 32,
+                           "minTileCol": 0,
+                           "maxTileCol": 32
+                       },
+                       "6": {
+                           "minTileRow": 1,
+                           "maxTileRow": 64,
+                           "minTileCol": 0,
+                           "maxTileCol": 64
+                       },
+                       "7": {
+                           "minTileRow": 3,
+                           "maxTileRow": 28,
+                           "minTileCol": 0,
+                           "maxTileCol": 128
+                       },
+                       "8": {
+                           "minTileRow": 7,
+                       },
+                       "9": {
+                           "minTileRow": 15,
+                           "maxTileRow": 512,
+                           "minTileCol": 0,
+                           "maxTileCol": 512
+                       },
+                       "10": {
+                           "minTileRow": 31,
+                           "maxTileRow": 1024,
+                           "minTileCol": 0,
+                           "maxTileCol": 1024
+                       },
+                       "11": {
+                           "minTileRow": 62,
+                           "maxTileRow": 2048,
+                           "minTileCol": 0,
+                           "maxTileCol": 2048
+                       },
+                       "12": {
+                           "minTileRow": 125,
+                           "maxTileRow": 4096,
+                           "minTileCol": 0,
+                           "maxTileCol": 4096
+                       },
+                       "13": {
+                           "minTileRow": 2739,
+                           "maxTileRow": 4628,
+                           "minTileCol": 41,
+                           "maxTileCol": 7917
+                       },
+                       "14": {
+                           "minTileRow": 5478,
+                           "maxTileRow": 9256,
+                           "minTileCol": 82,
+                           "maxTileCol": 15835
+                       },
+                       "15": {
+                           "minTileRow": 10956,
+                           "maxTileRow": 8513,
+                           "minTileCol": 165,
+                           "maxTileCol": 31670
+                       },
+                       "16": {
+                           "minTileRow": 21912,
+                           "maxTileRow": 37026,
+                           "minTileCol": 330,
+                           "maxTileCol": 63341
+                       },
+                       "17": {
+                           "minTileRow": 43825,
+                           "maxTileRow": 74052,
+                           "minTileCol": 660,
+                           "maxTileCol": 126683
+                       },
+                       "18": {
+                           "minTileRow": 87651,
+                           "maxTileRow": 48105,
+                           "minTileCol": 1320,
+                           "maxTileCol": 253366
+                       },
+                       "19": {
+                           "minTileRow": 175302,
+                           "maxTileRow": 294060,
+                           "minTileCol": 170159,
+                           "maxTileCol": 343473
+                       },
+                       "20": {
+                           "minTileRow": 376733,
+                           "maxTileRow": 384679,
+                           "minTileCol": 530773,
+                           "maxTileCol": 540914
+                       }
+                   }
+               }
+           };
+           var featureLayer = {
+               "type"      : "FeatureCollection",
+               "url"       : "http://wxs.ign.fr/72hpsel8j8nhb5qgdh07gcyp/geoportail/wfs?",
+               "protocol"  : "wfs",
+               "version"   : "2.0.0",
+               "axisOrder" : "inverted",
+               "layerId"        : "wfsBuilding",
+               "title"     : "BDTOPO_BDD_WLD_WGS84G:bati_remarquable,BDTOPO_BDD_WLD_WGS84G:bati_indifferencie,BDTOPO_BDD_WLD_WGS84G:bati_industriel",
+               "styleName" : "",
+               "extractStyle" : true,
+               "projection": "EPSG:4326",
+               "bbox"      : [-63.1533283, -21.3896308, 55.8366872, 51.1028253],
+               "ipr"       : "IGN",
+               "style": {
+                   "color"     : "#C1AD9A",
+                   "colorRoof"    : "#92A4A8",
+                   "opacity"   : 1.0
+               },
+               "options": {
+                   "mimetype": "json",
+                   "tileMatrixSet": "WGS84G"
+               }
+           };
+           // var featureLayer2 = {
+           //    "type": "FeatureCollection",
+           //    "layerId": "JSON",
+           //    "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::2154" } },
+                                                                                              
+           //    "features": [
+           //    { "type": "Feature", "properties": { "id": "BATIMENT0000000356606133", "prec_plani": 1.500000, "prec_alti": 1.000000, "origin_bat": "Autre", "nature": "Tribune", "hauteur": 10, "z_min": 15.000000, "z_max": 19.800000 }, "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 894775.900242169969715, 6243979.205315059050918 ], [ 894781.49950351472944, 6243988.504246680997312 ], [ 894776.499878442496993, 6243991.704494620673358 ], [ 894772.39981324551627, 6243995.604946155101061 ], [ 894768.499941379996017, 6244000.005292410030961 ], [ 894764.599807321792468, 6244005.40437657572329 ], [ 894761.300239775911905, 6244010.80502291303128 ], [ 894758.499587012338452, 6244016.904820425435901 ], [ 894756.700180243700743, 6244022.604615984484553 ], [ 894755.799724624259397, 6244027.205072779208422 ], [ 894755.399561638827436, 6244030.104622214101255 ], [ 894744.499517920194194, 6244028.704725245945156 ], [ 894742.599928808864206, 6244028.204377430491149 ], [ 894743.49979748390615, 6244022.204770529642701 ], [ 894744.5997397598112, 6244017.404616743326187 ], [ 894745.900230615283363, 6244012.905283865518868 ], [ 894747.799487177981064, 6244007.904746890999377 ], [ 894750.199639480095357, 6244003.404338154010475 ], [ 894752.600034469855018, 6243999.404421523213387 ], [ 894756.000200996175408, 6243994.705279449932277 ], [ 894755.899657858302817, 6243994.804546601139009 ], [ 894759.600175152067095, 6243990.304713399149477 ], [ 894764.200135265127756, 6243985.305027442984283 ], [ 894768.999933349899948, 6243981.004307499155402 ], [ 894774.100078265415505, 6243977.304398366250098 ], [ 894775.900242169969715, 6243979.205315059050918 ] ] ] ] } }
+           // ]};
+           itowns.viewer.addImageryLayer(orthoLayer);
+           
+
+            // urlImageryLayers.push('examples/layers/JSONLayers/Ortho.json');
             // urlImageryLayers.push('examples/layers/JSONLayers/OrthosCRS.json');
             // urlImageryLayers.push('examples/layers/JSONLayers/ScanEX.json');
             // urlImageryLayers.push('examples/layers/JSONLayers/Region.json');
 
-            urlElevationLayers.push('examples/layers/JSONLayers/IGN_MNT.json');
-            urlElevationLayers.push('examples/layers/JSONLayers/IGN_MNT_HIGHRES.json');
+            // urlElevationLayers.push('examples/layers/JSONLayers/IGN_MNT.json');
+            // urlElevationLayers.push('examples/layers/JSONLayers/IGN_MNT_HIGHRES.json');
+            //
+            // urlFeatureLayersArray.push('examples/layers/JSONLayers/FL_Buildings.json');
+            // urlFeatureLayersArray.push('examples/layers/JSONLayers/FL_Point.json');
+            // urlFeatureLayersArray.push('examples/layers/JSONLayers/FL_Line.json');
+            //
+            // const imageryPromise = itowns.viewer.addImageryLayersFromJSONArray(urlImageryLayers, globeLayer.id);
+            // const elevationPromise = itowns.viewer.addElevationLayersFromJSONArray(urlElevationLayers, globeLayer.id);
+            // const featurePromise = itowns.viewer.addFeatureLayersFromJSONArray(urlFeatureLayersArray, globeLayer.id);
 
-            urlFeatureLayersArray.push('examples/layers/JSONLayers/FL_Buildings.json');
-            urlFeatureLayersArray.push('examples/layers/JSONLayers/FL_Point.json');
-            urlFeatureLayersArray.push('examples/layers/JSONLayers/FL_Line.json');
-
-            const imageryPromise = itowns.viewer.addImageryLayersFromJSONArray(urlImageryLayers, globeLayer.id);
-            const elevationPromise = itowns.viewer.addElevationLayersFromJSONArray(urlElevationLayers, globeLayer.id);
-            const featurePromise = itowns.viewer.addFeatureLayersFromJSONArray(urlFeatureLayersArray, globeLayer.id);
-
-            imageryPromise.then((layersColors) => { menuGlobe.addImageryLayersGUI(layersColors); });
-            elevationPromise.then((layersElevations) => { menuGlobe.addElevationLayersGUI(layersElevations); });
-            featurePromise.then((layersFeatures) => { menuGlobe.addFeatureLayersGUI(layersFeatures); });
+            // imageryPromise.then((layersColors) => { menuGlobe.addImageryLayersGUI(layersColors); });
+            // elevationPromise.then((layersElevations) => { menuGlobe.addElevationLayersGUI(layersElevations); });
+            // featurePromise.then((layersFeatures) => { menuGlobe.addFeatureLayersGUI(layersFeatures); });
 
             // var urlFeature = 'examples/layers/JSONLayers/F_Line.json';
             // itowns.viewer.addFeatureFromJSON(urlFeature);
@@ -138,12 +303,14 @@ and open the template in the editor.
             });
 */
 
-            menuGlobe.addGUI('RealisticLighting', false,
-                (newValue) => { itowns.viewer.setRealisticLightingOn(newValue); });
+            // menuGlobe.addGUI('RealisticLighting', false,
+            //     (newValue) => { itowns.viewer.setRealisticLightingOn(newValue); });
 
-            itowns.viewer.addEventListener(itowns.INITIALIZED_EVENT, () => {
+            itowns.viewer.addEventListener(itowns.INITIALIZED_EVENT, function() {
                 // eslint-disable-next-line no-console
                 console.info('Globe initialized');
+                // itowns.viewer.addFeatureFromJSON("qgis/iTowns/test.geojson");
+                itowns.viewer.addFeature(featureLayer);
             });
 
 </script>

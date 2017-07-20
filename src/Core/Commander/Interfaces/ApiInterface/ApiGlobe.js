@@ -1176,11 +1176,16 @@ ApiGlobe.prototype.addFeature = function addFeature(options) {
     if (options === undefined) {
         throw new Error('options is required');
     }
-    const map = this.scene.getMap();
-    const layer = map.layersConfiguration.getGeometryLayerById(options.layerId);
+    // this.scene._geometryLayers[0].attach(layer)
+    // const map = this.scene.getAttachedLayers(l => l.type === 'bbox');
+    // console.log(map);
+    // const layer = map.layersConfiguration.getGeometryLayerById(options.layerId);
+    const layer = this.scene.getAttachedLayers(l => l.type === 'FeatureCollection');
+    console.log(layer);
     if (options.type && layer) {
         const tools = this.scene.scheduler.getProtocolProvider('wfs').featureToolBox;
         const featureMesh = tools.processingGeoJSON(options);
+        console.log(layer);
         layer.root.add(featureMesh);
     }
 };

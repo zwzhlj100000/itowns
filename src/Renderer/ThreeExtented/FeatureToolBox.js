@@ -530,7 +530,7 @@ FeatureToolBox.prototype.processingGeoJSON = function processingGeoJSON(json) {
                 1.0);
 
             wallMat.side = THREE.DoubleSide;
-            wallMat.uniforms.lightOn.value = true;
+            wallMat.uniforms.lightingEnabled.value = true;
             wallMat.uniforms.enabledCutColor.value = true;
             wallMat.transparent = true;
 
