@@ -23,8 +23,8 @@
 
 import os
 
-from PyQt4 import QtGui, uic
-from PyQt4.QtCore import QUrl 
+from PyQt4 import QtGui, uic, QtCore
+from PyQt4.QtCore import QUrl, QObject
 from PyQt4.QtCore import pyqtSignal
 from PyQt4.QtWebKit import QWebView , QWebPage, QWebSettings, QWebInspector
 from qgis.core import *
@@ -64,6 +64,38 @@ class iTownsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 	self.buttonCenter2D = QtGui.QPushButton('Center the 2D view on the 3D view', self)
 	self.gridLayout.addWidget(self.buttonCenter2D)
 	self.buttonCenter2D.clicked.connect(self.handleButtonCenter2D)	
+        self.vLayer = iface.activeLayer()
+        if self.vLayer != None:
+            self.vLayer.editingStarted.connect(self.handleEditingStarted)
+            self.vLayer.editingStopped.connect(self.handleEditingStopped)
+        #add the main py Object in the Js Context (to trigg python action from Js)
+        self.webview.page().mainFrame().addToJavaScriptWindowObject("pyObj", self)
+
+    def debugMessage(self):
+        QtGui.QMessageBox.information(None, "Info", "debug")
+
+    @QtCore.pyqtSlot(str)
+    def showMessage(self, msg):
+        """Open a message box and display the specified message."""
+        QtGui.QMessageBox.information(None, "Info", msg)
+
+    @QtCore.pyqtSlot(float, float)
+    def pickGeoPosition(self, lon, lat):
+        crsiTowns = QgsCoordinateReferenceSystem(4326)
+        crsCanvas = iface.mapCanvas().mapRenderer().destinationCrs()
+        xform = QgsCoordinateTransform(crsiTowns, crsCanvas)
+        pt = xform.transform(QgsPoint(lon,lat))
+        layer = iface.activeLayer()
+        feat = QgsFeature(layer.pendingFields())
+        feat.setGeometry(QgsGeometry.fromPoint(pt))
+        layer.dataProvider().addFeatures([feat])
+        iface.mapCanvas().refresh()
+
+    def handleEditingStarted(self):
+        self.webview.page().mainFrame().evaluateJavaScript("document.getElementById('viewerDiv').addEventListener('click',clickCallback,false)")
+
+    def handleEditingStopped(self):
+        self.webview.page().mainFrame().evaluateJavaScript("document.getElementById('viewerDiv').removeEventListener('click',clickCallback,false)")
 
     def handleButtonCenter3D(self):
 	crsiTowns = QgsCoordinateReferenceSystem(4326)
@@ -71,7 +103,6 @@ class iTownsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 	xform = QgsCoordinateTransform(crsCanvas, crsiTowns)
 	pt = xform.transform(iface.mapCanvas().center())
 	self.webview.page().mainFrame().evaluateJavaScript("globeView.controls.setCameraTargetGeoPosition({longitude:"+str(pt.x())+", latitude:"+str(pt.y())+"},true)")
-	
 
     def handleButtonCenter2D(self):
 	crsiTowns = QgsCoordinateReferenceSystem(4326)
@@ -89,7 +120,6 @@ class iTownsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 		self.inspector.hide()
 	else:
 		self.inspector.show()
-
 
     def closeEvent(self, event):
         self.closingPlugin.emit()

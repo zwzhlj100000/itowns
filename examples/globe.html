@@ -52,6 +52,12 @@
             //var menuGlobe = new GuiTools('menuDiv');
             //menuGlobe.view = globeView;
 
+
+	     var clickCallback = function(e){
+                        pyObj.pickGeoPosition(globeView.controls.pickGeoPosition(e).longitude(),
+                                              globeView.controls.pickGeoPosition(e).latitude());
+		};
+
             var orthoLayer = {
                type:       "color",
                protocol:   "wmts",
@@ -318,12 +324,14 @@
             globeView.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function () {
                 // eslint-disable-next-line no-console
                 console.info('Globe initialized');
+                //globeView.controls.setZoom(9);
                 // Promise.all(promises).then(function () {
                 // globeView.controls.setZoom(5, false);
                     //menuGlobe.addImageryLayersGUI(globeView.getLayers(function (l) { return l.type === 'color'; }));
                     //menuGlobe.addElevationLayersGUI(globeView.getLayers(function (l) { return l.type === 'elevation'; }));
                 // });
             });
+
         </script>
     </body>
 </html>
