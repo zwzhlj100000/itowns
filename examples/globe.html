@@ -324,6 +324,11 @@
             globeView.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function () {
                 // eslint-disable-next-line no-console
                 console.info('Globe initialized');
+
+                // json = JSON.parse('{"metadata": { "formatVersion" : 3 },"materials": [ {"DbgColor" : 15658734,"DbgIndex" : 0,"DbgName" : "dummy","colorDiffuse" : [ 1, 0, 0 ]} ],"vertices": [ 0,0,0, 0,0,1, 1,0,1, 1,0,0], "faces": []}');
+                json = JSON.parse('{"metaData":{"formatVersion":3},"materials": [ {"DbgColor" : 15658734, "DbgIndex" : 0,"DbgName" : "dummy","colorDiffuse" : [ 1, 0, 0 ]} ],"vertices": [4631599,437873,4350371],"faces":[]}');
+
+                globeView.controls.loadJSON(json);
                 //globeView.controls.setZoom(9);
                 // Promise.all(promises).then(function () {
                 // globeView.controls.setZoom(5, false);

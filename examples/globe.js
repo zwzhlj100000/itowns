@@ -24,7 +24,5 @@ var globeView = new itowns.GlobeView(viewerDiv, positionOnGlobe, { renderer: ren
 // promises.push(itowns.Fetcher.json('./layers/JSONLayers/WORLD_DTM.json').then(addLayerCb));
 // promises.push(itowns.Fetcher.json('./layers/JSONLayers/IGN_MNT_HIGHRES.json').then(addLayerCb));
 
-
-
 exports.view = globeView;
 exports.initialPosition = positionOnGlobe;

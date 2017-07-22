@@ -1754,4 +1754,11 @@ GlobeControls.prototype.reset = function reset() {
     this.updateCameraTransformation();
 };
 
+// TO BE MOVED ELSEWHERE
+GlobeControls.prototype.loadJSON = function loadJSON(json) {
+    var loader = new THREE.JSONLoader();
+    var geom3d = loader.parse(json);
+    this._view.scene.add(new THREE.Mesh(geom3d.geometry, new THREE.MeshBasicMaterial()));
+};
+
 export default GlobeControls;

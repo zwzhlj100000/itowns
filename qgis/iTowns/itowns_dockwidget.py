@@ -36,7 +36,8 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
 
 class MyWebPage(QWebPage):
     def javaScriptConsoleMessage(self, msg, lineNumber, sourceID):
-        print("JsConsole :"+str(sourceID)+':'+str(lineNumber)+' : '+str(msg))
+        """print("JsConsole :"+str(sourceID)+':'+str(lineNumber)+' : '+str(msg))"""
+        """QtGui.QMessageBox.information(None, "JsConsole",str(sourceID)+':'+str(lineNumber)+' : '+str(msg))"""
 
 class iTownsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 
@@ -64,6 +65,10 @@ class iTownsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 	self.buttonCenter2D = QtGui.QPushButton('Center the 2D view on the 3D view', self)
 	self.gridLayout.addWidget(self.buttonCenter2D)
 	self.buttonCenter2D.clicked.connect(self.handleButtonCenter2D)	
+        self.buttonImport = QtGui.QPushButton('Import selected features in the 3D view', self)
+        self.gridLayout.addWidget(self.buttonImport)
+        self.buttonImport.clicked.connect(self.handleImport)
+
         self.vLayer = iface.activeLayer()
         if self.vLayer != None:
             self.vLayer.editingStarted.connect(self.handleEditingStarted)
@@ -90,6 +95,34 @@ class iTownsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         feat.setGeometry(QgsGeometry.fromPoint(pt))
         layer.dataProvider().addFeatures([feat])
         iface.mapCanvas().refresh()
+
+    def handleImport(self):
+        crsiTowns = QgsCoordinateReferenceSystem(4978)
+        crsCanvas = iface.mapCanvas().mapRenderer().destinationCrs()
+        xform = QgsCoordinateTransform(crsCanvas, crsiTowns)
+        layer = iface.activeLayer()
+        selected_features = layer.selectedFeatures()
+
+        json = '{"metaData":{"formatVersion":3},'
+        json += '"materials": [ {"DbgColor" : 15658734, "DbgIndex" : 0,"DbgName" : "dummy","colorDiffuse" : [ 1, 0, 0 ]} ],'
+        json += '"vertices": ['
+        for i in selected_features:
+            pt_canvas = i.geometry().asPoint()
+            if pt_canvas:
+                pt_itowns = xform.transform(pt_canvas)
+                json+=str(pt_itowns.x())+','+str(pt_itowns.y())+',100,'
+        json = json[:-1]+'],"faces":[]}'
+        #json = '{"metadata": {"version": 4,"type": "BufferGeometry","generator": "BufferGeometryExporter"},'
+        #json += '"data": {"attributes": { "position": { "itemSize": 3, "type": "Float32Array","array":['
+        #for i in selected_features:
+        #    pt_canvas = i.geometry().asPoint()
+        #    if pt_canvas:
+        #        pt_itowns = xform.transform(pt_canvas)
+        #        json+=str(pt_itowns.x())+','+str(pt_itowns.y())+',100,'
+        #json = json[:-1]+']}}}}'
+        QtGui.QMessageBox.information(None, "Info", json)
+        self.webview.page().mainFrame().evaluateJavaScript("globeView.controls.loadJSON('"+json+"')")
+
 
     def handleEditingStarted(self):
         self.webview.page().mainFrame().evaluateJavaScript("document.getElementById('viewerDiv').addEventListener('click',clickCallback,false)")
