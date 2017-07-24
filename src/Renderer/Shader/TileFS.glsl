@@ -106,7 +106,7 @@ void main() {
                             offsetScale_L01,
                             textureIndex,
                             projWGS84 ? vUv_WGS84 : uvPM);
-
+s
                         if (layerColor.a > 0.0) {
                             validTexture = true;
                             float lum = 1.0;
