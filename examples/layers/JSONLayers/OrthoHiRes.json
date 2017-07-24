@@ -1,0 +1,54 @@
+{
+	"type": "color",
+	"protocol":   "wmts",
+	"id":         "OrthHiRes",
+	"url":        "http://wxs.ign.fr/an7nvfzojv5wa96dsga5nk8w/geoportail/wmts",
+	"networkOptions": {
+        "crossOrigin": "anonymous"
+    },
+	"updateStrategy": {
+		"type": "0",
+		"options": {}
+	},
+	"options": {
+		"attribution" : {
+            "name":"IGN",
+            "url":"http://www.ign.fr/"
+        },
+		"name": "ORTHOIMAGERY.ORTHOPHOTOS.PARIS",
+		"mimetype": "image/png",
+		"tileMatrixSet": "PM",
+		"tileMatrixSetLimits": {
+						 "17" : {
+                                "minTileRow": 45061,
+                                "maxTileRow": 45118,
+                                "minTileCol": 66335,
+                                "maxTileCol": 66420
+                            },
+                            "18" : {
+                                "minTileRow": 90123,
+                                "maxTileRow": 90237,
+                                "minTileCol": 132670,
+                                "maxTileCol": 132841
+                            },
+                            "19": {
+                                "minTileRow": 180246,
+                                "maxTileRow": 180474,
+                                "minTileCol": 265340,
+                                "maxTileCol": 265682
+                            },
+                            "20": {
+                                "minTileRow": 360492,
+                                "maxTileRow": 360948,
+                                "minTileCol": 530681,
+                                "maxTileCol": 531364
+                                },
+                             "21": {
+                                "minTileRow": 360492,
+                                "maxTileRow": 360948,
+                                "minTileCol": 530681,
+                                "maxTileCol": 531364
+                                }
+		}
+	}
+}

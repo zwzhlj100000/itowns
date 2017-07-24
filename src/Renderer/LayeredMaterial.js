@@ -162,6 +162,8 @@ const LayeredMaterial = function LayeredMaterial(options) {
     // Light position
     this.uniforms.lightPosition = new THREE.Uniform(new THREE.Vector3(-0.5, 0.0, 1.0));
 
+    this.uniforms.classesOnly = new THREE.Uniform(false);
+
     this.uniforms.distanceFog = new THREE.Uniform(1000000000.0);
 
     this.uniforms.uuid = new THREE.Uniform(0);
@@ -404,6 +406,10 @@ LayeredMaterial.prototype.getLayerTextureOffset = function getLayerTextureOffset
 
 LayeredMaterial.prototype.setLightingOn = function setLightingOn(enable) {
     this.uniforms.lightingEnabled.value = enable;
+};
+
+LayeredMaterial.prototype.setClassesOnly = function setClassesOnly(enable) {
+    this.uniforms.classesOnly.value = enable;
 };
 
 LayeredMaterial.prototype.setLayerFx = function setLayerFx(index, fx) {

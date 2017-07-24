@@ -103,6 +103,13 @@ function GlobeView(viewerDiv, coordCarto, options = {}) {
     this.camera.camera3D.updateProjectionMatrix();
     this.camera.camera3D.updateMatrixWorld(true);
 
+    // For texture Animation
+    this.classificationOn = false;
+    this.arrayRTT = new Uint8Array( viewerDiv.clientWidth * viewerDiv.clientHeight * 4); // new Uint8ClampedArray( this.viewerDiv.clientWidth * this.viewerDiv.clientHeight * 4 ); /*Float32Array*/
+    this.rttTexture = new THREE.DataTexture( this.arrayRTT, viewerDiv.clientWidth, viewerDiv.clientHeight, THREE.RGBAFormat);
+    this.arrayRTTCLASSES = new Uint8Array( viewerDiv.clientWidth * viewerDiv.clientHeight * 4); // new Uint8ClampedArray( this.viewerDiv.clientWidth * this.viewerDiv.clientHeight * 4 ); /*Float32Array*/
+    this.rttTextureCLASSES = new THREE.DataTexture( this.arrayRTTCLASSES, viewerDiv.clientWidth, viewerDiv.clientHeight, THREE.RGBAFormat);
+
 
     // Configure tiles
     const nodeInitFn = function nodeInitFn(context, layer, parent, node) {
@@ -477,6 +484,16 @@ GlobeView.prototype.setRealisticLightingOn = function setRealisticLightingOn(val
     this.updateMaterialUniform('lightingEnabled', value);
     this.updateMaterialUniform('lightPosition', coSun);
     this.notifyChange(true);
+};
+
+// For texture animation
+GlobeView.prototype.setClassesOnly = function setClassesOnly(value) {
+    this.updateMaterialUniform('classesOnly', value);
+    this.notifyChange(0, true);
+};
+GlobeView.prototype.setClassificationOn = function setClassificationOn(value) {
+    this.classificationOn = value;
+    this.notifyChange(0, true);
 };
 
 GlobeView.prototype.setLightingPos = function setLightingPos(pos) {

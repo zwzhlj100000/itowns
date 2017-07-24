@@ -102,7 +102,7 @@ MainLoop.prototype._step = function _step(view, timestamp) {
     // As such there's no continuous update-loop, instead we use a ad-hoc update/render
     // mechanism.
     if (willRedraw) {
-        this._renderView(view);
+     //   this._renderView(view);
     }
 
     // next time, we'll consider that we've just started the loop if we are still PAUSED now

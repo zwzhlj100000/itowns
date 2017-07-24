@@ -25,6 +25,11 @@ function c3DEngine(rendererOrDiv) {
     this.fullSizeRenderTarget.texture.minFilter = THREE.LinearFilter;
     this.fullSizeRenderTarget.texture.generateMipmaps = false;
 
+    // For texture animation
+    this.fullSizeRenderTargetCLASSES = new THREE.WebGLRenderTarget(this.width, this.height);
+    this.fullSizeRenderTargetCLASSES.texture.minFilter = THREE.LinearFilter;
+    this.fullSizeRenderTargetCLASSES.texture.generateMipmaps = false;
+
     this.renderView = function renderScene(view) {
         this.renderer.setViewport(0, 0, this.width, this.height);
         this.renderer.clear();

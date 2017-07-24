@@ -39,7 +39,8 @@
     "proj4": "^2.4.3",
     "text-encoding": "^0.6.4",
     "three": "^0.86.0",
-    "whatwg-fetch": "^2.0.2"
+    "whatwg-fetch": "^2.0.2",
+    "sobel":"^0.0.7"
   },
   "devDependencies": {
     "babel-cli": "^6.22.2",

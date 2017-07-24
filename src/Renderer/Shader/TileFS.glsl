@@ -28,6 +28,7 @@ uniform vec3        lightPosition;
 // Options global
 uniform bool        selected;
 uniform bool        lightingEnabled;
+uniform bool        classesOnly;
 
 varying vec2        vUv_WGS84;
 varying float       vUv_PM;
@@ -109,7 +110,6 @@ void main() {
                         if (layerColor.a > 0.0) {
                             validTexture = true;
                             float lum = 1.0;
-
                             if(paramsA.z > 0.0) {
                                 float a = max(0.05,1.0 - length(layerColor.xyz-CWhite.xyz));
                                 if(paramsA.z > 2.0) {
@@ -119,7 +119,17 @@ void main() {
                                 lum = 1.0-pow(abs(a),paramsA.z);
                             }
 
-                            diffuseColor = mix( diffuseColor,layerColor, lum*paramsA.w * layerColor.a);
+                            if( layer == 1 && layerColor.r > 0. && classesOnly)   // HYDRO
+                                diffuseColor = vec4(0.0, 1.0, 0.0, 1.0); 
+                                else
+                                if( layer == 2 && ( layerColor.r > 0. || layerColor.g > 0. || layerColor.b > 0. ) && classesOnly)  // BATI
+                                    diffuseColor = vec4(1.0, diffuseColor.g, 0.0, 1.0); 
+                                    else
+                                    if( layer == 3 && ( layerColor.r > 0. || layerColor.g > 0. || layerColor.b > 0. ) && classesOnly) // ROADS
+                                    diffuseColor = vec4(0.0, diffuseColor.g, 1.0, 1.0);
+                                    else if(!(layer == 0 && classesOnly)) 
+                                        diffuseColor = mix( diffuseColor,layerColor, lum*paramsA.w * layerColor.a);
+                                        else diffuseColor = vec4(0.,0.,0.,0.);
 
                         }
                     }
