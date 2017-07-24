@@ -324,6 +324,7 @@
                 void main() {
 
                     float modTime = mod(time, 0.4);
+                    float modVal = 0.04;
 
                     vec2 nextUV = vec2( vUv.x * (1. - modTime), vUv.y /* * (1. - time) */);
                     vec2 nextUVCars; // = vec2( vUv.x /* * (1. - time * 3.)*/, vUv.y * (1. - modTime *  3.) );
@@ -342,7 +343,7 @@
 
                     if(colorClasses.b  == 1.){           // ROAD
                         axis = getLocalObjectAxis(vUv, tClasses, vec4(0., 0., 1., 1.));
-                        nextUVCars = vUv + vec2( mod(axis.x * modTime * 4., 0.02), mod(axis.y * modTime * 4., 0.02)); //vUv + 4. * axis * modTime;
+                        nextUVCars = vUv + vec2( mod(axis.x * modTime * 4., modVal), mod(axis.y * modTime * 4., modVal)); //vUv + 4. * axis * modTime;
                         //nextUVCars = vec2( vUv.x * (1. + axis.x * modTime*4.), vUv.y  * (1. + axis.y * modTime*4.) );
                         colorClassesDeltaCars = texture2D(tClasses, nextUVCars);
                         if(colorClassesDeltaCars.b == 1.){
@@ -356,7 +357,7 @@
 
                             if(colorClasses.g == 1.){    // WATER
                                 axis =  getLocalObjectAxisWater3(vUv, tClasses, vec4(0., 1., 0., 1.));
-                                nextUV = vUv + vec2( mod(axis.x * modTime * 1., 0.02), mod(axis.y * modTime * 1., 0.02));//vec2( mod(axis.x + modTime , 0.04), mod(axis.y + modTime , 0.04)); //vec2(vUv.x * (axis.x + modTime), vUv.y )
+                                nextUV = vUv + vec2( mod(axis.x * modTime * 1., modVal), mod(axis.y * modTime * 1., modVal));//vec2( mod(axis.x + modTime , 0.04), mod(axis.y + modTime , 0.04)); //vec2(vUv.x * (axis.x + modTime), vUv.y )
                                 colorClassesDelta = texture2D( tClasses, nextUV);
                                 if( colorClassesDelta == vec4(0., 1., 0., 1.)) {  // if it is only water
                                     minDistance = checkDistanceToObstacle(nextUV, tClasses);
