@@ -79,7 +79,7 @@ void main() {
             float fogIntensity = 1.0;
         #endif
 
-        vec4 diffuseColor = CWhite;
+        vec4 diffuseColor = vec4(0.);//CWhite;
         bool validTexture = false;
 
         // TODO Optimisation des uv1 peuvent copier pas lignes!!
@@ -106,7 +106,7 @@ void main() {
                             offsetScale_L01,
                             textureIndex,
                             projWGS84 ? vUv_WGS84 : uvPM);
-s
+
                         if (layerColor.a > 0.0) {
                             validTexture = true;
                             float lum = 1.0;
@@ -119,17 +119,21 @@ s
                                 lum = 1.0-pow(abs(a),paramsA.z);
                             }
 
-                            if( layer == 1 && layerColor.r > 0. && classesOnly)   // HYDRO
-                                diffuseColor = vec4(0.0, 1.0, 0.0, 1.0); 
-                                else
-                                if( layer == 2 && ( layerColor.r > 0. || layerColor.g > 0. || layerColor.b > 0. ) && classesOnly)  // BATI
-                                    diffuseColor = vec4(1.0, diffuseColor.g, 0.0, 1.0); 
-                                    else
-                                    if( layer == 3 && ( layerColor.r > 0. || layerColor.g > 0. || layerColor.b > 0. ) && classesOnly) // ROADS
-                                    diffuseColor = vec4(0.0, diffuseColor.g, 1.0, 1.0);
-                                    else if(!(layer == 0 && classesOnly)) 
-                                        diffuseColor = mix( diffuseColor,layerColor, lum*paramsA.w * layerColor.a);
-                                        else diffuseColor = vec4(0.,0.,0.,0.);
+                            if(layer == 0 && !classesOnly){
+                                diffuseColor = layerColor;
+                            } else{
+                                if(classesOnly){
+                                    if( layer == 1 && layerColor.r > 0.)   // HYDRO
+                                        diffuseColor = vec4(0.0, 1.0, 0.0, 1.0); 
+                                        else
+                                        if( layer == 2 && ( layerColor.r > 0. || layerColor.g > 0. || layerColor.b > 0. ))  // BATI
+                                            diffuseColor = vec4(1.0, diffuseColor.g, 0.0, 1.0); 
+                                            else
+                                            if( layer == 3 && ( layerColor.r > 0. || layerColor.g > 0. || layerColor.b > 0. )) // ROADS
+                                                diffuseColor = vec4(0.0, diffuseColor.g, 1.0, 1.0);
+                                                
+                                }
+                            }            
 
                         }
                     }
