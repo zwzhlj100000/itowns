@@ -105,10 +105,10 @@ function GlobeView(viewerDiv, coordCarto, options = {}) {
 
     // For texture Animation
     this.classificationOn = false;
-    this.arrayRTT = new Uint8Array( viewerDiv.clientWidth * viewerDiv.clientHeight * 4); // new Uint8ClampedArray( this.viewerDiv.clientWidth * this.viewerDiv.clientHeight * 4 ); /*Float32Array*/
-    this.rttTexture = new THREE.DataTexture( this.arrayRTT, viewerDiv.clientWidth, viewerDiv.clientHeight, THREE.RGBAFormat);
-    this.arrayRTTCLASSES = new Uint8Array( viewerDiv.clientWidth * viewerDiv.clientHeight * 4); // new Uint8ClampedArray( this.viewerDiv.clientWidth * this.viewerDiv.clientHeight * 4 ); /*Float32Array*/
-    this.rttTextureCLASSES = new THREE.DataTexture( this.arrayRTTCLASSES, viewerDiv.clientWidth, viewerDiv.clientHeight, THREE.RGBAFormat);
+    this.arrayRTT = new Uint8Array(viewerDiv.clientWidth * viewerDiv.clientHeight * 4); // new Uint8ClampedArray( this.viewerDiv.clientWidth * this.viewerDiv.clientHeight * 4 ); /*Float32Array*/
+    this.rttTexture = new THREE.DataTexture(this.arrayRTT, viewerDiv.clientWidth, viewerDiv.clientHeight, THREE.RGBAFormat);
+    this.arrayRTTCLASSES = new Uint8Array(viewerDiv.clientWidth * viewerDiv.clientHeight * 4); // new Uint8ClampedArray( this.viewerDiv.clientWidth * this.viewerDiv.clientHeight * 4 ); /*Float32Array*/
+    this.rttTextureCLASSES = new THREE.DataTexture(this.arrayRTTCLASSES, viewerDiv.clientWidth, viewerDiv.clientHeight, THREE.RGBAFormat);
 
 
     // Configure tiles
