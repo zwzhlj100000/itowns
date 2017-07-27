@@ -314,7 +314,7 @@
                     alpha = floor(alpha / (M_PI / 8.)) * (M_PI / 8.); 
                     vec2 normalizedOutVec = vec2(cos(alpha), sin(alpha));
 
-                    return normalizedOutVec; //vec2(-outVec.x, outVec.y);
+                    return vec2(alpha / (2.* M_PI), alpha / (2.* M_PI)); //normalizedOutVec; // vec2(-outVec.x, outVec.y);
 
                 }
 
@@ -366,7 +366,7 @@
                             }
                     }
 
-                    gl_FragColor =  color; //vec4(vec2( abs(axis.x) * 5., abs(axis.y) * 5.), 0., 1.);//color; // mix(color, colorClasses, 0.5); //vec4(vec3(minDistance * 100.), 1.); //color; // colorClasses
+                    gl_FragColor = vec4(vec2( abs(axis.x) * 5., abs(axis.y) * 5.), 0., 1.);// color; //vec4(vec2( abs(axis.x) * 5., abs(axis.y) * 5.), 0., 1.);//color; // mix(color, colorClasses, 0.5); //vec4(vec3(minDistance * 100.), 1.); //color; // colorClasses
 
                 }
 
