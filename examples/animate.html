@@ -269,15 +269,15 @@
                 vec2 getLocalObjectAxisWater3(vec2 uv, sampler2D tex, vec4 colorClass){
                     
                     const float inc = M_PI / 32.;
-                    float d = 0.01;
-                    const float incDistance = 0.002;
-                    const float maxDistance = 0.5;
+                    float d;
+                    const float incDistance = 0.01;
+                    const float maxDistance = 0.12;
                     vec2 p1 = vec2(0.);
                     vec2 p2 = vec2(10.);
                     vec2 outVec = vec2(0.);
                     float distanceMin = 2.;
 
-                    for (float i = 0.; i < 2. * M_PI; i += inc){
+                    for (float i = 0.; i < M_PI; i += inc){
 
                         p1 = vec2(-10.);
                         p2 = vec2(10.);
@@ -286,36 +286,80 @@
                         for (float a = 0.; a <= maxDistance; a += incDistance){
 
                             vec2 currentCoord1 = vec2( uv.x + a * cos(i), uv.y + a * sin(i));
-                            vec4 col1 = texture2D( tex, currentCoord1);
-                            bool inside = col1.g == 1.;
-                            if (!inside && currentCoord1.x > 0. && currentCoord1.x < 1. && currentCoord1.y < 1. && currentCoord1.y > 0.) {p1 = currentCoord1; break;}
+                            if (currentCoord1.x > 0. && currentCoord1.x < 1. && currentCoord1.y > 0. && currentCoord1.y < 1.){
+                                vec4 col1 = texture2D( tex, currentCoord1);
+                                bool inside = col1.g == 1.;
+                                if (!inside) {p1 = currentCoord1; break;}
+                            }
                         }
                         // Look opposite extremity
                         for (float a = 0.; a >= -maxDistance; a -= incDistance){
 
                             vec2 currentCoord2 = vec2( uv.x + a * cos(i), uv.y + a * sin(i));
-                            vec4 col2 = texture2D( tex, currentCoord2);
-                            bool inside = col2.g == 1.;
-                            if (!inside&& currentCoord2.x > 0. && currentCoord2.x < 1. && currentCoord2.y < 1. && currentCoord2.y > 0.) {p2 = currentCoord2; break;}
+                            if (currentCoord2.x > 0. && currentCoord2.x < 1. && currentCoord2.y > 0. && currentCoord2.y < 1.){
+                                vec4 col2 = texture2D( tex, currentCoord2);
+                                bool inside = col2.g == 1.;
+                                if (!inside) {p2 = currentCoord2; break;}
+                            }
                         }
 
                         // We compute length of segment
                         d = distance(p1,p2);//length(p2 - p1);
                         if(d < distanceMin){
                             distanceMin = d;
-                            outVec = p2 - p1;
+                            outVec = normalize(p2 - uv); //p2 - p1;
                         }
 
                     }
 
                     // Optional normalization at PI/4;
                     outVec = vec2(-outVec.x, outVec.y);  // Orthogonal vector
-                    float alpha = atan(outVec.y, outVec.x);
+                    float alpha = atan(outVec.y, outVec.x);   // abs
                     //alpha = floor(alpha / (M_PI / 8.)) * (M_PI / 8.); 
                     //vec2 normalizedOutVec = vec2(cos(alpha), sin(alpha));
 
-                    return vec2(alpha / (2.* M_PI), alpha / (2.* M_PI)); //normalizedOutVec; // vec2(-outVec.x, outVec.y);
+                    return vec2(alpha / ( M_PI), alpha / ( M_PI)); //normalizedOutVec; // vec2(-outVec.x, outVec.y);
 
+                }
+
+                // Fast version testing 8 axis
+                vec2 getLocalObjectAxisWater4(vec2 uv, sampler2D tex, vec4 colorClass){
+
+                    const float inc = M_PI / 4.;
+                    float d;
+                    const float incDistance = 0.005;
+                    const float maxDistance = 0.12;
+                    vec2 p1 = vec2(0.);
+                    vec2 p2 = vec2(10.);
+                    vec2 outVec = vec2(0.);
+                    float distanceMin = .1;
+                    float alphaMax = 0.;
+                    bool founded = false;
+
+                     for (float i = 0.; i < M_PI; i += inc){
+
+                        for (float a = 0.; a <= maxDistance; a += incDistance){
+
+                            if(founded) break;
+                            vec2 currentCoord1 = vec2( uv.x + a * cos(i), uv.y + a * sin(i));
+                            if (currentCoord1.x > 0. && currentCoord1.x < 1. && currentCoord1.y > 0. && currentCoord1.y < 1.){
+                                vec4 col1 = texture2D( tex, currentCoord1);
+                                bool inside = col1.g == 1.;
+                                if (!inside) {p1 = currentCoord1; 
+                                              if(a> distanceMin) {
+                                                 alphaMax = i; 
+                                                 founded = true;
+                                              }
+                                              break;}
+                            }
+
+                        }
+                         if(founded) break;
+
+                     }
+
+                    vec2 normalizedOutVec = vec2(cos(alphaMax), sin(alphaMax));
+                    return  normalizedOutVec; //vec2(alphaMax ,alphaMax); 
                 }
 
 
@@ -356,7 +400,7 @@
                         }else
 
                             if(colorClasses.g == 1.){    // WATER
-                                axis =  getLocalObjectAxisWater3(vUv, tClasses, vec4(0., 1., 0., 1.));
+                                axis =  getLocalObjectAxisWater4(vUv, tClasses, vec4(0., 1., 0., 1.));
                                 nextUV = vUv + vec2( mod(axis.x * modTime * 1., modVal), mod(axis.y * modTime * 1., modVal));//vec2( mod(axis.x + modTime , 0.04), mod(axis.y + modTime , 0.04)); //vec2(vUv.x * (axis.x + modTime), vUv.y )
                                 colorClassesDelta = texture2D( tClasses, nextUV);
                                 if( colorClassesDelta == vec4(0., 1., 0., 1.)) {  // if it is only water
@@ -366,7 +410,7 @@
                             }
                     }
 
-                    gl_FragColor = vec4(vec2( abs(axis.x) * 5., abs(axis.y) * 5.), 0., 1.);// color; //vec4(vec2( abs(axis.x) * 5., abs(axis.y) * 5.), 0., 1.);//color; // mix(color, colorClasses, 0.5); //vec4(vec3(minDistance * 100.), 1.); //color; // colorClasses
+                    gl_FragColor = color; // vec4(vec2( abs(axis.x) * 5., abs(axis.y) * 5.), 0., 1.);// color; //vec4(vec2( abs(axis.x) * 5., abs(axis.y) * 5.), 0., 1.);//color; // mix(color, colorClasses, 0.5); //vec4(vec3(minDistance * 100.), 1.); //color; // colorClasses
 
                 }
 

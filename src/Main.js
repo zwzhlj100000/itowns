@@ -21,8 +21,8 @@ export { ColorLayersOrdering } from './Renderer/ColorLayersOrdering';
 export { default as FlyControls } from './Renderer/ThreeExtended/FlyControls';
 export { CONTROL_EVENTS } from './Renderer/ThreeExtended/GlobeControls';
 
-export { Segmentation } from './Process/Segmentation';
-/*
+//export { Segmentation } from './Process/Segmentation';
+
 import Segmentation from './Process/Segmentation';
 export { Segmentation }
-*/
+
