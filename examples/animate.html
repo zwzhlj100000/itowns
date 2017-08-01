@@ -42,6 +42,7 @@
                 uniform float scale;
                 uniform vec2 tSize;
                 uniform float time;
+                uniform vec2 pca;
 
                 uniform sampler2D tDiffuse;
                 uniform sampler2D tClasses;
@@ -400,12 +401,18 @@
                         }else
 
                             if(colorClasses.g == 1.){    // WATER
-                                axis =  getLocalObjectAxisWater4(vUv, tClasses, vec4(0., 1., 0., 1.));
-                                nextUV = vUv + vec2( mod(axis.x * modTime * 1., modVal), mod(axis.y * modTime * 1., modVal));//vec2( mod(axis.x + modTime , 0.04), mod(axis.y + modTime , 0.04)); //vec2(vUv.x * (axis.x + modTime), vUv.y )
+                                axis =  pca; // getLocalObjectAxisWater4(vUv, tClasses, vec4(0., 1., 0., 1.));
+                                nextUV = vUv + mod(time, 0.1) * axis;//vec2(vUv.x * (1. + axis.x / 10. + modTime), vUv.y * (1. + axis.y / 10. + modTime)  ); //vUv + vec2( mod(axis.x + modTime , 0.04), mod(axis.y + modTime , 0.04)); //vUv + vec2( mod(axis.x * modTime * 0.2, modVal), mod(axis.y * modTime * 0.2, modVal));//vec2( mod(axis.x + modTime , 0.04), mod(axis.y + modTime , 0.04)); //vec2(vUv.x * (axis.x + modTime), vUv.y )
                                 colorClassesDelta = texture2D( tClasses, nextUV);
+                                vec4 nextTexture;
+                                if(nextUV.x > 1. || nextUV.y > 1.)
+                                   nextTexture =  color;
+                                else
+                                   nextTexture = texture2D( tDiffuse, nextUV);
+                                
                                 if( colorClassesDelta == vec4(0., 1., 0., 1.)) {  // if it is only water
                                     minDistance = checkDistanceToObstacle(nextUV, tClasses);
-                                    color = mix(currentColor, texture2D( tDiffuse, nextUV), min(minDistance * (1. / 0.03), 1.) );
+                                    color = mix(currentColor, nextTexture, min(minDistance * (1. / 0.03), 1.) );
                                 }
                             }
                     }
@@ -502,6 +509,7 @@
                         "angle":    { value: 1.57 },
                         "scale":    { value: 1.0 },
                         "time":     { value: 0.  },
+                        "pca":      { value: new itowns.THREE.Vector2() },
                     },
                     vertexShader: document.getElementById('vertexshader').textContent,
                     fragmentShader: document.getElementById('fragmentshader').textContent,
@@ -512,6 +520,7 @@
 
 
                 globeView.render = () => {
+
                     const g = globeView.mainLoop.gfxEngine;
                     const r = g.renderer;
                     r.setRenderTarget(g.fullSizeRenderTarget);
@@ -525,6 +534,7 @@
                     //var t0 = performance.now();
                     r.readRenderTargetPixels( g.fullSizeRenderTarget, 0, 0, g.getWindowSize().x, g.getWindowSize().y, globeView.arrayRTT );
                     globeView.rttTexture.needsUpdate = true;
+
 
                 // RENDER ONLY OBJECT CLASSES (layer)
                     globeView.setClassesOnly(true);
@@ -543,23 +553,28 @@
                             // gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
                             // gl.readPixels( 0, 0, g.getWindowSize().x, g.getWindowSize().y, gl.RGBA, gl.G_HALF_FLOAT, globeView.arrayRTT );
 
-
+                // OPTIONAL CLASSIFICATION PHASE            
                     var cvTexture;
-                    //var t1 = performance.now();    
-                    if(globeView.classificationOn){
+                    //var t1 = performance.now();   
+
+                    if(globeView.classificationOn && globeView.mainLoop.needsRedraw){
                         var segmentation = new itowns.Segmentation();
                         segmentation.setImage(globeView.rttTexture, globeView.rttTextureCLASSES);//g.fullSizeRenderTarget);
-                        cvTexture = segmentation.extractCars();
-                    } else
-                        cvTexture = globeView.rttTexture;
+                        globeView.pca = segmentation.computePCA(1); //console.log(globeView.pca);
+                        //cvTexture = segmentation.extractCars(); cvTexture = segmentation.computePCA(1);
+                    } /*else
+                        cvTexture = globeView.rttTexture;*/
                     //var t2 = performance.now();
                     // console.log(t1 - t0,"  ",t2-t1);
+
+                    cvTexture = globeView.rttTexture;
 
                     quad.material.uniforms["tDiffuse"].value = cvTexture;//g.fullSizeRenderTarget.texture;
                     quad.material.uniforms["tClasses"].value = globeView.rttTextureCLASSES;//g.fullSizeRenderTarget.texture;
                     quad.material.uniforms["time"].value += 0.00008;
-                   // quad.material.uniforms["tSize"].value.set(
-                   //     g.fullSizeRenderTarget.width, g.fullSizeRenderTarget.height);
+                    quad.material.uniforms["pca"].value = globeView.pca;
+                            // quad.material.uniforms["tSize"].value.set(
+                            // g.fullSizeRenderTarget.width, g.fullSizeRenderTarget.height);
 
                     r.setRenderTarget();
                     r.clear();
@@ -567,7 +582,6 @@
                     r.render(
                         postprocessScene,
                         cam);
-
                 };
 
 

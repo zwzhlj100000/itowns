@@ -109,7 +109,7 @@ function GlobeView(viewerDiv, coordCarto, options = {}) {
     this.rttTexture = new THREE.DataTexture(this.arrayRTT, viewerDiv.clientWidth, viewerDiv.clientHeight, THREE.RGBAFormat);
     this.arrayRTTCLASSES = new Uint8Array(viewerDiv.clientWidth * viewerDiv.clientHeight * 4); // new Uint8ClampedArray( this.viewerDiv.clientWidth * this.viewerDiv.clientHeight * 4 ); /*Float32Array*/
     this.rttTextureCLASSES = new THREE.DataTexture(this.arrayRTTCLASSES, viewerDiv.clientWidth, viewerDiv.clientHeight, THREE.RGBAFormat);
-
+    this.pca = new THREE.Vector2();
 
     // Configure tiles
     const nodeInitFn = function nodeInitFn(context, layer, parent, node) {
