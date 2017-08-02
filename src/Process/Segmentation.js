@@ -2556,9 +2556,11 @@ Segmentation.prototype.computePCA = function(colorChannelIndice){
     	}
     }
 
-    var p = new PCA(pointsPCA).getEigenvectors()[0];
-    if(p[0] > 0.7) p[1] = - p[1];  // WEIRD BUG. ?
-    this.pca = new THREE.Vector2(p[0], p[1]); //console.log(this.pca);
+    if(pointsPCA.length > 0 ){
+    	var p = new PCA(pointsPCA).getEigenvectors()[0];
+    	if(p[0] > 0.7) p[1] = - p[1];  // WEIRD BUG. ?
+    	this.pca = new THREE.Vector2(p[0], p[1]); //console.log(this.pca);
+    }
     return this.pca;
 	//console.log("pca.getEigenvectors", pca.getEigenvectors()[0]);
 }
