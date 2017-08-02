@@ -42,6 +42,7 @@
                 uniform float scale;
                 uniform vec2 tSize;
                 uniform float time;
+                uniform vec2 screenSize;
                 uniform vec2 pca;
 
                 uniform sampler2D tDiffuse;
@@ -50,6 +51,10 @@
                 varying vec2 vUv;
                 vec4 color;
                 float coefMix;
+                float uvxSize; 
+                float uvySize;
+
+
 
                 #define M_PI 3.1415926535897932384626433832795
 
@@ -364,7 +369,22 @@
                 }
 
 
+                vec4 averageTexture(vec2 uv, sampler2D tex){
 
+                    float uvxDistance = mod(uv.x, uvxSize); 
+                    float uvyDistance = mod(uv.y, uvySize);
+                    vec4 outColMixX = mix(texture2D( tex, uv), texture2D( tex, vec2(uv.x + uvxSize, uv.y)), uvxDistance / uvxSize);
+                    vec4 outColMixY = mix(texture2D( tex, uv), texture2D( tex, vec2(uv.x, uv.y + uvySize)), uvyDistance / uvySize);
+/*
+                    float deltaUV = 0.001;
+                    vec4 outCol = (texture2D( tex, vec2(uv.x + deltaUV, uv.y)) +  
+                                   texture2D( tex, vec2(uv.x - deltaUV, uv.y)) + 
+                                   texture2D( tex, vec2(uv.x, uv.y + deltaUV)) + 
+                                   texture2D( tex, vec2(uv.x, uv.y - deltaUV)) + 
+                                   texture2D( tex, uv)) / 5.;
+*/
+                    return (outColMixX + outColMixY) / 2.;
+                }
 
                 void main() {
 
@@ -384,6 +404,10 @@
 
                     color = currentColor;
 
+                    uvxSize = 1. / screenSize.x;
+                    uvySize = 1. / screenSize.y;
+
+
 
 
                     if(colorClasses.b  == 1.){           // ROAD
@@ -402,13 +426,13 @@
 
                             if(colorClasses.g == 1.){    // WATER
                                 axis =  pca; // getLocalObjectAxisWater4(vUv, tClasses, vec4(0., 1., 0., 1.));
-                                nextUV = vUv + mod(time, 0.1) * axis;//vec2(vUv.x * (1. + axis.x / 10. + modTime), vUv.y * (1. + axis.y / 10. + modTime)  ); //vUv + vec2( mod(axis.x + modTime , 0.04), mod(axis.y + modTime , 0.04)); //vUv + vec2( mod(axis.x * modTime * 0.2, modVal), mod(axis.y * modTime * 0.2, modVal));//vec2( mod(axis.x + modTime , 0.04), mod(axis.y + modTime , 0.04)); //vec2(vUv.x * (axis.x + modTime), vUv.y )
+                                nextUV = vUv + mod(time /*+ mod(length(vUv), 0.002)*/, 0.1) * axis;//vec2(vUv.x * (1. + axis.x / 10. + modTime), vUv.y * (1. + axis.y / 10. + modTime)  ); //vUv + vec2( mod(axis.x + modTime , 0.04), mod(axis.y + modTime , 0.04)); //vUv + vec2( mod(axis.x * modTime * 0.2, modVal), mod(axis.y * modTime * 0.2, modVal));//vec2( mod(axis.x + modTime , 0.04), mod(axis.y + modTime , 0.04)); //vec2(vUv.x * (axis.x + modTime), vUv.y )
                                 colorClassesDelta = texture2D( tClasses, nextUV);
                                 vec4 nextTexture;
-                                if(nextUV.x > 1. || nextUV.y > 1.)
+                                if(nextUV.x > 1. || nextUV.y > 1. || nextUV.x < 0. || nextUV.y < 0.)
                                    nextTexture =  color;
                                 else
-                                   nextTexture = texture2D( tDiffuse, nextUV);
+                                   nextTexture = averageTexture(nextUV, tDiffuse); // texture2D( tDiffuse, nextUV);
                                 
                                 if( colorClassesDelta == vec4(0., 1., 0., 1.)) {  // if it is only water
                                     minDistance = checkDistanceToObstacle(nextUV, tClasses);
@@ -505,6 +529,7 @@
                         "tDiffuse": { value: null },  // Original image (with optional dection output debug) 
                         "tClasses": { value: null },  // Classes image (one color per object class (layer))
                         "tSize":    { value: new itowns.THREE.Vector2( 256, 256 ) },
+                        "screenSize": { value: new itowns.THREE.Vector2( globeView.mainLoop.gfxEngine.getWindowSize().x,  globeView.mainLoop.gfxEngine.getWindowSize().y ) },
                         "center":   { value: new itowns.THREE.Vector2( 0.5, 0.5 ) },
                         "angle":    { value: 1.57 },
                         "scale":    { value: 1.0 },
