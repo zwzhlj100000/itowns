@@ -82,6 +82,9 @@
                          );
                 }
 
+                float getLuminance(vec4 color){
+                    return (0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b);
+                }
 
     /*
                 // Return true if at least one neighbour is a building
@@ -124,6 +127,9 @@
                         }
 
                     }
+
+                    // We check if uv close to limits [0-1] to have nice opacity blending
+                    //if (distance
 
                     return minDistance;
                 }
@@ -401,6 +407,7 @@
 
                     float minDistance = 0.; //0.03; // checkDistanceToObstacle(nextUV, tClasses);
                     vec2 axis = vec2(0., 0.);
+                    float distBlendingBorder = 0.02;
 
                     color = currentColor;
 
@@ -426,7 +433,7 @@
 
                             if(colorClasses.g == 1.){    // WATER
                                 axis =  pca; // getLocalObjectAxisWater4(vUv, tClasses, vec4(0., 1., 0., 1.));
-                                nextUV = vUv + mod(time /*+ mod(length(vUv), 0.002)*/, 0.1) * axis;//vec2(vUv.x * (1. + axis.x / 10. + modTime), vUv.y * (1. + axis.y / 10. + modTime)  ); //vUv + vec2( mod(axis.x + modTime , 0.04), mod(axis.y + modTime , 0.04)); //vUv + vec2( mod(axis.x * modTime * 0.2, modVal), mod(axis.y * modTime * 0.2, modVal));//vec2( mod(axis.x + modTime , 0.04), mod(axis.y + modTime , 0.04)); //vec2(vUv.x * (axis.x + modTime), vUv.y )
+                                nextUV = vUv + mod(time, 0.1) * axis;//vec2(vUv.x * (1. + axis.x / 10. + modTime), vUv.y * (1. + axis.y / 10. + modTime)  ); //vUv + vec2( mod(axis.x + modTime , 0.04), mod(axis.y + modTime , 0.04)); //vUv + vec2( mod(axis.x * modTime * 0.2, modVal), mod(axis.y * modTime * 0.2, modVal));//vec2( mod(axis.x + modTime , 0.04), mod(axis.y + modTime , 0.04)); //vec2(vUv.x * (axis.x + modTime), vUv.y )
                                 colorClassesDelta = texture2D( tClasses, nextUV);
                                 vec4 nextTexture;
                                 if(nextUV.x > 1. || nextUV.y > 1. || nextUV.x < 0. || nextUV.y < 0.)
@@ -435,11 +442,26 @@
                                    nextTexture = averageTexture(nextUV, tDiffuse); // texture2D( tDiffuse, nextUV);
                                 
                                 if( colorClassesDelta == vec4(0., 1., 0., 1.)) {  // if it is only water
-                                    minDistance = checkDistanceToObstacle(nextUV, tClasses);
+                                    minDistance = checkDistanceToObstacle(nextUV, tClasses);  // Check obstacle and also end of texture (uv.x> 1 for example)
                                     color = mix(currentColor, nextTexture, min(minDistance * (1. / 0.03), 1.) );
                                 }
+
+                                // We test if close to limit of frame uv to have smooth progressive blending on boarders
+                                if(nextUV.x + distBlendingBorder > 1. ){ //|| nextUV.y > 1. || nextUV.x < 0. || nextUV.y < 0.){
+                                    color = mix(color, currentColor, 1. / distBlendingBorder * (nextUV.x + distBlendingBorder - 1.)); // vec4( 20. * (nextUV.x + distBlendingBorder - 1.),0.,0.,1.);
+                                }
+                                if(nextUV.y - distBlendingBorder < 0. ){ //|| nextUV.y > 1. || nextUV.x < 0. || nextUV.y < 0.){
+                                    color = mix(color, currentColor, 1. / distBlendingBorder * ( distBlendingBorder - nextUV.y)); // vec4( 20. * (nextUV.x + distBlendingBorder - 1.),0.,0.,1.);
+                                }
+                            /*
+                                // Specular effect like wave
+                                float uvC = abs(0.01 - mod(time * 10., .01) - mod(vUv.x, 0.01));
+                                if(getLuminance(color) > 0.3){
+                                    if(uvC < 0.001) color *= 1. + (0.001 - uvC) * 100.;
+                                }
+                            */
                             }
-                    }
+                        }
 
                     gl_FragColor = color; // vec4(vec2( abs(axis.x) * 5., abs(axis.y) * 5.), 0., 1.);// color; //vec4(vec2( abs(axis.x) * 5., abs(axis.y) * 5.), 0., 1.);//color; // mix(color, colorClasses, 0.5); //vec4(vec3(minDistance * 100.), 1.); //color; // colorClasses
 
