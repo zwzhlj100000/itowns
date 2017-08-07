@@ -49,6 +49,7 @@
                 uniform sampler2D tClasses;
 
                 varying vec2 vUv;
+
                 vec4 color;
                 float coefMix;
                 float uvxSize; 
@@ -433,7 +434,17 @@
 
                             if(colorClasses.g == 1.){    // WATER
                                 axis =  pca; // getLocalObjectAxisWater4(vUv, tClasses, vec4(0., 1., 0., 1.));
-                                nextUV = vUv + mod(time, 0.1) * axis;//vec2(vUv.x * (1. + axis.x / 10. + modTime), vUv.y * (1. + axis.y / 10. + modTime)  ); //vUv + vec2( mod(axis.x + modTime , 0.04), mod(axis.y + modTime , 0.04)); //vUv + vec2( mod(axis.x * modTime * 0.2, modVal), mod(axis.y * modTime * 0.2, modVal));//vec2( mod(axis.x + modTime , 0.04), mod(axis.y + modTime , 0.04)); //vec2(vUv.x * (axis.x + modTime), vUv.y )
+                                //nextUV = vUv + mod(time, 0.1) * axis;
+                                vec2 uvTraj = vUv + mod(time, 0.1) * axis;
+                                vec2 perioNoise = vec2( mod(uvTraj.x, 0.001 ),  mod(uvTraj.y, 0.001 ));
+                                nextUV = uvTraj + perioNoise; //vUv + mod(time, 0.1) * axis + mod(vUv.y, 0.001); //mod(sqrt(axis.x * vUv.x + axis.y * vUv.y), 0.001);//mod(vUv.x, 0.001); // We introduce a periodic effect to have different speed on each pixel
+                                /*
+                                if(uvC < 0.001){
+                                    //nextUV = vUv + mod(time, 0.1) * axis;
+                                }else
+                                   nextUV = vUv + mod(time, 0.1) * axis;
+                                   */
+                                //vec2(vUv.x * (1. + axis.x / 10. + modTime), vUv.y * (1. + axis.y / 10. + modTime)  ); //vUv + vec2( mod(axis.x + modTime , 0.04), mod(axis.y + modTime , 0.04)); //vUv + vec2( mod(axis.x * modTime * 0.2, modVal), mod(axis.y * modTime * 0.2, modVal));//vec2( mod(axis.x + modTime , 0.04), mod(axis.y + modTime , 0.04)); //vec2(vUv.x * (axis.x + modTime), vUv.y )
                                 colorClassesDelta = texture2D( tClasses, nextUV);
                                 vec4 nextTexture;
                                 if(nextUV.x > 1. || nextUV.y > 1. || nextUV.x < 0. || nextUV.y < 0.)
