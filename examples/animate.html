@@ -47,6 +47,7 @@
 
                 uniform sampler2D tDiffuse;
                 uniform sampler2D tClasses;
+                uniform sampler2D tClouds;
 
                 varying vec2 vUv;
 
@@ -136,29 +137,50 @@
                 }
 
 
+                // Check distance from parameter uv to border of road
+                float checkRoadBorders(vec2 uv, sampler2D tex){
+
+                    const float maxDistance = 0.03;
+                    float minDistance = maxDistance;
+
+                    for (float i = -maxDistance; i< maxDistance; i+= maxDistance / 10.) {
+                        for (float j = -maxDistance; j< maxDistance; j+= maxDistance / 10.) {
+                        
+                           if (texture2D(tex, vec2(uv.x + i, uv.y + j)).b != 1.){  // No road pixel
+                                float dist = sqrt (i * i + j * j);
+                                if(dist < minDistance) minDistance = dist;
+                            }
+                        }
+                    }
+                    return minDistance;
+                }
+
+
                 // For Road
                 // Returns the local axis of the object from class colorClass at coord uv
                 vec2 getLocalObjectAxis(vec2 uv, sampler2D tex, vec4 colorClass){
 
-                    const float inc = M_PI / 16.;
+                    const float inc = M_PI / 12.;
                     float d = 0.01;
                     const float incDistance = 0.002;
-                    const float maxDistance = 0.04;
+                    const float maxDistance = 0.1;
+                    float currentMaxDist = 0.;
                     float angularOri = 0.;
                     vec2 outputVec = vec2(0.);
 
-                    for (float i = 0.; i < 2. * M_PI; i += inc){
+                    for (float i = 0.; i < M_PI; i += inc){
 
+                        if(currentMaxDist >= maxDistance) break;    
                         // Then we compute the max distance from the current position to the limit of the object
                         for (float a = 0.; a <= maxDistance; a += incDistance){
                             vec2 currentCoord = vec2( uv.x + a * cos(i), uv.y + a * sin(i));
                             vec4 col = texture2D( tex, currentCoord);
                             bool inside = col.b == 1.;//col == colorClass;
+                            if(a >= currentMaxDist) {currentMaxDist = a; angularOri = i; outputVec = vec2(cos(i), sin(i));}  
                             if (!inside) break;
-                            if(inside && a >= 0.038/*== maxDistance*/) {angularOri = i; outputVec = vec2(cos(i), sin(i)); break;}  
+                            //if(inside && a >=  maxDistance - incDistance) {angularOri = i; outputVec = vec2(cos(i), sin(i)); break;}  
                         }
                     }
-
                     return outputVec;
                 }
 
@@ -420,12 +442,14 @@
 
                     if(colorClasses.b  == 1.){           // ROAD
                         axis = getLocalObjectAxis(vUv, tClasses, vec4(0., 0., 1., 1.));
-                        nextUVCars = vUv + vec2( mod(axis.x * modTime * 4., modVal), mod(axis.y * modTime * 4., modVal)); //vUv + 4. * axis * modTime;
+                        nextUVCars = vUv +  mod(time, 0.05) * axis * 3.; // vec2( mod(axis.x * modTime * 4., modVal), mod(axis.y * modTime * 4., modVal)); //vUv + 4. * axis * modTime;
                         //nextUVCars = vec2( vUv.x * (1. + axis.x * modTime*4.), vUv.y  * (1. + axis.y * modTime*4.) );
                         colorClassesDeltaCars = texture2D(tClasses, nextUVCars);
                         if(colorClassesDeltaCars.b == 1.){
-                            color = texture2D( tDiffuse, nextUVCars); minDistance = 1.;
+                            color = averageTexture(nextUVCars, tDiffuse); //minDistance = 1.; //texture2D( tDiffuse, nextUVCars); minDistance = 1.;
                         }
+                        float distToBorders = checkRoadBorders(nextUVCars, tClasses);
+                        color = mix(color, currentColor, distToBorders);
                     }else{
 
                         if(colorClasses.r == 1.){        // BUILDING
@@ -474,7 +498,11 @@
                             }
                         }
 
-                    gl_FragColor = color; // vec4(vec2( abs(axis.x) * 5., abs(axis.y) * 5.), 0., 1.);// color; //vec4(vec2( abs(axis.x) * 5., abs(axis.y) * 5.), 0., 1.);//color; // mix(color, colorClasses, 0.5); //vec4(vec3(minDistance * 100.), 1.); //color; // colorClasses
+                    // CLOUDS
+                    vec4 cloudColor = texture2D(tClouds, vec2( vUv.x + 1. * time, vUv.y + 1. * time) );
+                    color = mix(color, vec4(cloudColor.r,cloudColor.r,cloudColor.r,1.), cloudColor.r - 0.1);  // -0.1 to erase "noise"    
+
+                    gl_FragColor =  color; //vec4( abs(axis.x) , abs(axis.y) , 0., 1.); // color; // mix(color, colorClasses, 0.5); // color; // vec4(vec2( abs(axis.x) * 5., abs(axis.y) * 5.), 0., 1.);// color; //vec4(vec2( abs(axis.x) * 5., abs(axis.y) * 5.), 0., 1.);//color; // mix(color, colorClasses, 0.5); //vec4(vec3(minDistance * 100.), 1.); //color; // colorClasses
 
                 }
 
@@ -561,6 +589,7 @@
                     uniforms: {
                         "tDiffuse": { value: null },  // Original image (with optional dection output debug) 
                         "tClasses": { value: null },  // Classes image (one color per object class (layer))
+                        "tClouds":  { value: new itowns.THREE.TextureLoader().load( "cloud.jpg" ) },  // Original image (with optional dection output debug) 
                         "tSize":    { value: new itowns.THREE.Vector2( 256, 256 ) },
                         "screenSize": { value: new itowns.THREE.Vector2( globeView.mainLoop.gfxEngine.getWindowSize().x,  globeView.mainLoop.gfxEngine.getWindowSize().y ) },
                         "center":   { value: new itowns.THREE.Vector2( 0.5, 0.5 ) },
