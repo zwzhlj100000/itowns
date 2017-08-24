@@ -6,7 +6,12 @@ import PointCloudProcessing from '../../../Process/PointCloudProcessing';
 import PotreeBinLoader from './PotreeBinLoader';
 import PotreeCinLoader from './PotreeCinLoader';
 
+/*
+import EventEmitter2 from 'eventemitter2'
+window.EventEmitter2 = EventEmitter2.EventEmitter2;
 
+import ROSLIB from 'roslib/src/RosLib';
+*/
 function loadPoints() {
     var points;
     console.log("loadPoints");

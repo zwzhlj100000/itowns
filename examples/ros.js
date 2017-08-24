@@ -2,6 +2,7 @@
 
 // eslint-disable-next-line no-unused-vars
 
+
 function loadPoints() {
     var points;
     console.log("loadPoints");
@@ -74,9 +75,82 @@ function showRosData(serverUrl, fileName, lopocsTable) {
     pointcloud.table = lopocsTable;
 
     var p = loadPoints();
-    view.scene.add(p);
-    console.log(view);
+   // view.scene.add(p);
+    // console.log(view);
+    controls = new itowns.FirstPersonControls(view, { focusOnClick: true });
+    // console.log(ROSLIB.Ros);
 
+    var ros = new ROSLIB.Ros({
+              url : 'wss://172.16.2.3:9090'
+            });
+
+    ros.on('connection', function() {
+                console.log('Connected to websocket server.');
+            });
+            
+            ros.on('error', function(error) {
+                console.log('Error connecting to websocket server: ', error);
+            });
+            
+            ros.on('close', function() {
+                console.log('Connection to websocket server closed.');
+            });
+
+            listener = new ROSLIB.Topic({
+                ros : ros,
+                name : '/xlba_window_points_computed',
+                messageType : 'sensor_msgs/PointCloud2'
+            });
+
+
+            listener.subscribe(function(message) {
+                console.log('Received message on ' + listener.name + ': ' + message.fields);
+
+                d = message.data;
+                atobs = window.atob(d);
+
+                var ptSize = message.point_step;
+                var rowSize = message.row_step;
+                var numPoints = message.height;
+
+                var buf = new ArrayBuffer(numPoints * rowSize);
+                var bigEndian = message.is_bigendian;
+
+                var bufView = new DataView(buf);
+                for (var i=0, strLen=numPoints * rowSize; i < strLen; i++) {
+                    bufView.setUint8(i, atobs.charCodeAt(i), !bigEndian);
+                }
+
+                var float32view   = new Float32Array(buf);
+                var uint32View    = new Uint32Array(buf);
+
+                var geometry = new itowns.THREE.BufferGeometry();
+                var positions = new Float32Array( numPoints * 3 );
+                var colors =    new Float32Array( numPoints * 3 );
+
+                for (var i=0; i<numPoints; i++) {
+                    var pIdx = i * 3;
+                    var rIdx = i * 4;
+
+                    positions[pIdx+0] = float32view[rIdx+1];
+                    positions[pIdx+1] = float32view[rIdx+2];
+                    positions[pIdx+2] = float32view[rIdx+3];
+                    colors[pIdx+0] = 1.0;
+                    colors[pIdx+1] = 1.0;
+                    colors[pIdx+2] = 1.0;
+                }
+                geometry.addAttribute( 'position', new itowns.THREE.BufferAttribute( positions, 3 ) );
+                geometry.addAttribute( 'color', new itowns.THREE.BufferAttribute( colors, 3 ) );
+                geometry.computeBoundingSphere();
+                //
+                var material = new itowns.THREE.PointsMaterial( { size: 0.01, vertexColors: itowns.THREE.VertexColors } );
+                points = new itowns.THREE.Points( geometry, material );
+                //scene.add( points );
+                view.scene.add(points);
+
+            });
+
+            
 
     // point selection on double-click
     function dblClickHandler(event) {
