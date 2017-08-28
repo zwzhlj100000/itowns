@@ -36,14 +36,15 @@
             <div id="itowns"> </div>
 
             <script src="GUI/dat.gui/dat.gui.min.js"></script>
-            <script src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
-            <script src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
             <script src="../dist/itowns.js"></script>
             <script src="../dist/debug.js"></script>
+            <script src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+            <script src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
             <script src="./ros.js"></script>
 
             <script type="text/javascript">
-                showRosData();
+                // Specify the address of the rosbridge socket, the topic name and message type
+                showRosData('wss://172.16.2.3:9090', '/xlba_window_points_computed', 'sensor_msgs/PointCloud2');  
             </script>
     </body>
 </html>
