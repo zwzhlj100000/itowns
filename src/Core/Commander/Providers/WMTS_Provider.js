@@ -48,7 +48,7 @@ define('Core/Commander/Providers/WMTS_Provider', [
          * @returns {Object@call;create.url.url|String}
          */
         WMTS_Provider.prototype.url = function(coWMTS) {
-            var key = "72hpsel8j8nhb5qgdh07gcyp";
+            var key = "va5orxd0pgzvq3jxutqfuy0b";
             var layer = coWMTS.zoom > 11 ? "ELEVATION.ELEVATIONGRIDCOVERAGE.HIGHRES" : "ELEVATION.ELEVATIONGRIDCOVERAGE";
 
             var url = "http://wxs.ign.fr/" + key + "/geoportail/wmts?LAYER=" + layer +
@@ -65,7 +65,7 @@ define('Core/Commander/Providers/WMTS_Provider', [
          */
         WMTS_Provider.prototype.urlOrtho = function(coWMTS) {
 
-            var key = "72hpsel8j8nhb5qgdh07gcyp";
+            var key = "va5orxd0pgzvq3jxutqfuy0b";
             //var layer = "ORTHOIMAGERY.ORTHOPHOTOS";
             var url;
 
