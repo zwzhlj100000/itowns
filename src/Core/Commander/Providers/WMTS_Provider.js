@@ -48,12 +48,12 @@ define('Core/Commander/Providers/WMTS_Provider', [
          * @returns {Object@call;create.url.url|String}
          */
         WMTS_Provider.prototype.url = function(coWMTS) {
-            var key = "va5orxd0pgzvq3jxutqfuy0b";
+            var key = "72hpsel8j8nhb5qgdh07gcyp";
             var layer = coWMTS.zoom > 11 ? "ELEVATION.ELEVATIONGRIDCOVERAGE.HIGHRES" : "ELEVATION.ELEVATIONGRIDCOVERAGE";
 
             var url = "http://wxs.ign.fr/" + key + "/geoportail/wmts?LAYER=" + layer +
                 "&FORMAT=image/x-bil;bits=32&SERVICE=WMTS&VERSION=1.0.0" +
-                "&REQUEST=GetTile&STYLE=normal&TILEMATRIXSET=PM" +
+                "&REQUEST=GetTile&STYLE=normal&TILEMATRIXSET=WGS84G" +
                 "&TILEMATRIX=" + coWMTS.zoom + "&TILEROW=" + coWMTS.row + "&TILECOL=" + coWMTS.col;
             return url;
         };
@@ -65,7 +65,7 @@ define('Core/Commander/Providers/WMTS_Provider', [
          */
         WMTS_Provider.prototype.urlOrtho = function(coWMTS) {
 
-            var key = "va5orxd0pgzvq3jxutqfuy0b";
+            var key = "72hpsel8j8nhb5qgdh07gcyp";
             //var layer = "ORTHOIMAGERY.ORTHOPHOTOS";
             var url;
 
