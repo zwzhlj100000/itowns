@@ -140,7 +140,7 @@
                 // Check distance from parameter uv to border of road
                 float checkRoadBorders(vec2 uv, sampler2D tex){
 
-                    const float maxDistance = 0.03;
+                    const float maxDistance = 0.01;
                     float minDistance = maxDistance;
 
                     for (float i = -maxDistance; i< maxDistance; i+= maxDistance / 10.) {
@@ -415,10 +415,17 @@
                     return (outColMixX + outColMixY) / 2.;
                 }
 
+                // Fast cheap color check (large interval) for vegetation
+                bool lookLikeVegetation(vec4 col){
+                    return col.g > col.r && col.r > col.b && col.g > 30./255. && col.g < 140./255.;
+                }
+
                 void main() {
 
                     float modTime = mod(time, 0.4);
                     float modVal = 0.04;
+                    float motionDuration = 0.02; 
+                    float speedCoefficient = 3.; 
 
                     vec2 nextUV = vec2( vUv.x * (1. - modTime), vUv.y /* * (1. - time) */);
                     vec2 nextUVCars; // = vec2( vUv.x /* * (1. - time * 3.)*/, vUv.y * (1. - modTime *  3.) );
@@ -437,19 +444,26 @@
                     uvxSize = 1. / screenSize.x;
                     uvySize = 1. / screenSize.y;
 
+                    // Large interval because we suppose we're on a road
+                    // We could also compute a score based on the distance to the interval
+                    //bool indiceVegetation = currentColor.g > currentColor.r && currentColor.r > currentColor.b && currentColor.g > 30./255. && currentColor.g < 140./255.;
+                    //if (indiceVegetation) colorClasses = vec4(1.,1.,1.,1.);
 
 
 
-                    if(colorClasses.b  == 1.){           // ROAD
+                    if(colorClasses.b  == 1. && ! lookLikeVegetation(currentColor)){           // ROAD
                         axis = getLocalObjectAxis(vUv, tClasses, vec4(0., 0., 1., 1.));
-                        nextUVCars = vUv +  mod(time, 0.05) * axis * 3.; // vec2( mod(axis.x * modTime * 4., modVal), mod(axis.y * modTime * 4., modVal)); //vUv + 4. * axis * modTime;
+                        float mD =  mod(time, 2. * motionDuration) - motionDuration;
+                        float timeCoef = mD > 0. ? mD : -mD;
+                        nextUVCars = vUv +  timeCoef/*mod(time, motionDuration)*/ * axis * speedCoefficient; // vec2( mod(axis.x * modTime * 4., modVal), mod(axis.y * modTime * 4., modVal)); //vUv + 4. * axis * modTime;
                         //nextUVCars = vec2( vUv.x * (1. + axis.x * modTime*4.), vUv.y  * (1. + axis.y * modTime*4.) );
                         colorClassesDeltaCars = texture2D(tClasses, nextUVCars);
-                        if(colorClassesDeltaCars.b == 1.){
+                        if(colorClassesDeltaCars.b == 1. && ! lookLikeVegetation(texture2D( tDiffuse, nextUVCars))){
                             color = averageTexture(nextUVCars, tDiffuse); //minDistance = 1.; //texture2D( tDiffuse, nextUVCars); minDistance = 1.;
                         }
-                        float distToBorders = checkRoadBorders(nextUVCars, tClasses);
-                        color = mix(color, currentColor, distToBorders);
+                        float distToBorders = checkRoadBorders(vUv/*nextUVCars*/, tClasses);
+                        color = mix(color, currentColor, 1. - min(distToBorders * 300., 1.));
+
                     }else{
 
                         if(colorClasses.r == 1.){        // BUILDING
@@ -502,7 +516,7 @@
                     vec4 cloudColor = texture2D(tClouds, vec2( vUv.x + 1. * time, vUv.y + 1. * time) );
                     color = mix(color, vec4(cloudColor.r,cloudColor.r,cloudColor.r,1.), cloudColor.r - 0.1);  // -0.1 to erase "noise"    
 
-                    gl_FragColor =  color; //vec4( abs(axis.x) , abs(axis.y) , 0., 1.); // color; // mix(color, colorClasses, 0.5); // color; // vec4(vec2( abs(axis.x) * 5., abs(axis.y) * 5.), 0., 1.);// color; //vec4(vec2( abs(axis.x) * 5., abs(axis.y) * 5.), 0., 1.);//color; // mix(color, colorClasses, 0.5); //vec4(vec3(minDistance * 100.), 1.); //color; // colorClasses
+                    gl_FragColor =  colorClasses; //color; // colorClasses; //color; //vec4( abs(axis.x) , abs(axis.y) , 0., 1.); // color; // mix(color, colorClasses, 0.5); // color; // vec4(vec2( abs(axis.x) * 5., abs(axis.y) * 5.), 0., 1.);// color; //vec4(vec2( abs(axis.x) * 5., abs(axis.y) * 5.), 0., 1.);//color; // mix(color, colorClasses, 0.5); //vec4(vec3(minDistance * 100.), 1.); //color; // colorClasses
 
                 }
 
