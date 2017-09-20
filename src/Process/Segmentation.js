@@ -2565,6 +2565,22 @@ Segmentation.prototype.computePCA = function(colorChannelIndice){
 	//console.log("pca.getEigenvectors", pca.getEigenvectors()[0]);
 }
 
+Segmentation.prototype.sobelPass = function(colorImg){
+  // ******************************** SOBEL 
+    //var edges = tracking.Image.sobel(gray, width, height);
+    // Sobel constructor returns an Uint8ClampedArray with sobel data
+    //var imageData = colorImg.image.data;
+    var imageData = new ImageData(new Uint8ClampedArray(colorImg.image.data), colorImg.image.width, colorImg.image.height);
+  //  console.log(imageData);
+    var sobelData = Sobel(imageData);
+  //  console.log("iiiii", sobelData);
+ //   var sobelImageData = sobelData.toImageData();
+  //  context.putImageData(sobelImageData, 0, 0);
+ 	var res = sobelData.toImageData().data; 
+ 	var resUI = Uint8Array.from(res);
+ 	//console.log("aaaaaaaa", res);
+    return resUI; //sobelData;
+}
 
 Segmentation.prototype.extractCars = function(){
 

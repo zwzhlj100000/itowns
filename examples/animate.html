@@ -516,7 +516,7 @@
                     vec4 cloudColor = texture2D(tClouds, vec2( vUv.x + 1. * time, vUv.y + 1. * time) );
                     color = mix(color, vec4(cloudColor.r,cloudColor.r,cloudColor.r,1.), cloudColor.r - 0.1);  // -0.1 to erase "noise"    
 
-                    gl_FragColor =  colorClasses; //color; // colorClasses; //color; //vec4( abs(axis.x) , abs(axis.y) , 0., 1.); // color; // mix(color, colorClasses, 0.5); // color; // vec4(vec2( abs(axis.x) * 5., abs(axis.y) * 5.), 0., 1.);// color; //vec4(vec2( abs(axis.x) * 5., abs(axis.y) * 5.), 0., 1.);//color; // mix(color, colorClasses, 0.5); //vec4(vec3(minDistance * 100.), 1.); //color; // colorClasses
+                    gl_FragColor =   colorClasses; //color; //vec4( abs(axis.x) , abs(axis.y) , 0., 1.); // color; // mix(color, colorClasses, 0.5); // color; // vec4(vec2( abs(axis.x) * 5., abs(axis.y) * 5.), 0., 1.);// color; //vec4(vec2( abs(axis.x) * 5., abs(axis.y) * 5.), 0., 1.);//color; // mix(color, colorClasses, 0.5); //vec4(vec3(minDistance * 100.), 1.); //color; // colorClasses
 
                 }
 
@@ -531,7 +531,7 @@
                     }
 
 
-                    if (colorClasses.g == 1.){ //checkWater( colorClasses, colorClassesDelta)){  // WATER
+                    if (colorClasses.g == 1.){  // checkWater( colorClasses, colorClassesDelta)){  // WATER
                         axis =  getLocalObjectAxisWater(vUv, tClasses, vec4(0., 1., 0., 1.));
                         nextUV = vUv + vec2( mod(axis.x + modTime , 0.04), mod(axis.y + modTime , 0.04));//vec2(vUv.x * (axis.x + modTime), vUv.y )//vUv + vec2( mod(axis.x * modTime , 0.04), mod(axis.y * modTime , 0.04));//vUv + 4. * axis * modTime;
 
@@ -667,6 +667,16 @@
                         cvTexture = globeView.rttTexture;*/
                     //var t2 = performance.now();
                     // console.log(t1 - t0,"  ",t2-t1);
+                    //console.log(globeView.rttTextureCLASSES);
+                    // SOBEL pass 
+                    if(globeView.classificationOn && globeView.mainLoop.needsRedraw){
+                        var segmentation2 = new itowns.Segmentation();
+                        globeView.rttTextureCLASSES = new itowns.THREE.DataTexture(segmentation2.sobelPass(globeView.rttTexture),
+                             g.getWindowSize().x, g.getWindowSize().y, itowns.THREE.RGBAFormat);
+                        globeView.rttTextureCLASSES.needsUpdate = true;
+                    }
+
+
 
                     cvTexture = globeView.rttTexture;
 

@@ -40,7 +40,7 @@
     "text-encoding": "^0.6.4",
     "three": "^0.86.0",
     "whatwg-fetch": "^2.0.2",
-    "sobel":"^0.0.7",
+    "sobel":"^0.0.9",
     "ml-pca":"^2.1.0"
   },
   "devDependencies": {
