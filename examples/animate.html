@@ -417,7 +417,7 @@
 
                 // Fast cheap color check (large interval) for vegetation
                 bool lookLikeVegetation(vec4 col){
-                    return col.g > col.r && col.r > col.b && col.g > 30./255. && col.g < 140./255.;
+                    return false; //col.g > col.r && col.r > col.b && col.g > 30./255. && col.g < 140./255.;
                 }
 
                 void main() {
@@ -437,6 +437,7 @@
 
                     float minDistance = 0.; //0.03; // checkDistanceToObstacle(nextUV, tClasses);
                     vec2 axis = vec2(0., 0.);
+                    vec2 axisNormalized;
                     float distBlendingBorder = 0.02;
 
                     color = currentColor;
@@ -516,7 +517,7 @@
                     vec4 cloudColor = texture2D(tClouds, vec2( vUv.x + 1. * time, vUv.y + 1. * time) );
                     color = mix(color, vec4(cloudColor.r,cloudColor.r,cloudColor.r,1.), cloudColor.r - 0.1);  // -0.1 to erase "noise"    
 
-                    gl_FragColor =   colorClasses; //color; //vec4( abs(axis.x) , abs(axis.y) , 0., 1.); // color; // mix(color, colorClasses, 0.5); // color; // vec4(vec2( abs(axis.x) * 5., abs(axis.y) * 5.), 0., 1.);// color; //vec4(vec2( abs(axis.x) * 5., abs(axis.y) * 5.), 0., 1.);//color; // mix(color, colorClasses, 0.5); //vec4(vec3(minDistance * 100.), 1.); //color; // colorClasses
+                    gl_FragColor =  vec4(0., normalize(axis) , 1.);// colorClasses; //color; //vec4( abs(axis.x) , abs(axis.y) , 0., 1.); // color; // mix(color, colorClasses, 0.5); // color; // vec4(vec2( abs(axis.x) * 5., abs(axis.y) * 5.), 0., 1.);// color; //vec4(vec2( abs(axis.x) * 5., abs(axis.y) * 5.), 0., 1.);//color; // mix(color, colorClasses, 0.5); //vec4(vec3(minDistance * 100.), 1.); //color; // colorClasses
 
                 }
 
@@ -668,7 +669,7 @@
                     //var t2 = performance.now();
                     // console.log(t1 - t0,"  ",t2-t1);
                     
-
+/*
                     // SOBEL pass 
                     if(globeView.classificationOn && globeView.mainLoop.needsRedraw){
                         var segmentation2 = new itowns.Segmentation();
@@ -679,7 +680,7 @@
                         globeView.rttTextureCLASSES.needsUpdate = true;
                     }
 
-
+*/
 
                     cvTexture = globeView.rttTexture;
 
