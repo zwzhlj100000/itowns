@@ -667,10 +667,13 @@
                         cvTexture = globeView.rttTexture;*/
                     //var t2 = performance.now();
                     // console.log(t1 - t0,"  ",t2-t1);
-                    //console.log(globeView.rttTextureCLASSES);
+                    
+
                     // SOBEL pass 
                     if(globeView.classificationOn && globeView.mainLoop.needsRedraw){
                         var segmentation2 = new itowns.Segmentation();
+                       // globeView.arrayRTTCLASSES = segmentation2.sobelPass(globeView.rttTexture);
+
                         globeView.rttTextureCLASSES = new itowns.THREE.DataTexture(segmentation2.sobelPass(globeView.rttTexture),
                              g.getWindowSize().x, g.getWindowSize().y, itowns.THREE.RGBAFormat);
                         globeView.rttTextureCLASSES.needsUpdate = true;
