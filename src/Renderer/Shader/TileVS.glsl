@@ -4,6 +4,7 @@
 const float PI          = 3.14159265359;
 const float INV_TWO_PI  = 1.0 / (2.0*PI);
 const float PI4         = 0.78539816339;
+const int   TEX_UNITS   = 15;
 
 attribute float     uv_pm;
 attribute vec2      uv_wgs84;
@@ -12,6 +13,10 @@ attribute vec3      normal;
 
 uniform sampler2D   dTextures_00[1];
 uniform vec3        offsetScale_L00[1];
+
+uniform sampler2D   dTextures_01[TEX_UNITS];
+uniform vec3        offsetScale_L01[TEX_UNITS];
+
 uniform int         loadedTexturesCount[8];
 
 uniform mat4        projectionMatrix;
