@@ -4,7 +4,14 @@
 const float PI          = 3.14159265359;
 const float INV_TWO_PI  = 1.0 / (2.0*PI);
 const float PI4         = 0.78539816339;
-const int   TEX_UNITS   = 15;
+
+const vec4 CFog = vec4( 0.76, 0.85, 1.0, 1.0);
+const vec4 CWhite = vec4(1.0,1.0,1.0,1.0);
+const vec4 CBlueOcean = vec4( 0.04, 0.23, 0.35, 1.0);
+const vec4 COrange = vec4( 1.0, 0.3, 0.0, 1.0);
+const vec4 CRed = vec4( 1.0, 0.0, 0.0, 1.0);
+
+//const int   TEX_UNITS   = 15;
 
 attribute float     uv_pm;
 attribute vec2      uv_wgs84;
@@ -25,6 +32,7 @@ uniform float       distanceFog;
 uniform int         colorLayersCount;
 uniform vec3        lightPosition;
 
+float height = 0.;
 
 /*********/
 
@@ -48,6 +56,18 @@ highp float decode32(highp vec4 rgba) {
     return Result;
 }
 
+// 4 connex averaging using weighted (distance parameter)
+vec4 AverageColor( sampler2D dTextures[TEX_UNITS],vec3 offsetScale[TEX_UNITS],int id, vec2 uv, float dist){
+
+    float distMax = min(dist/50000., 0.02);
+    vec4 cc1 = colorAtIdUv(dTextures, offsetScale, id, vec2(clamp(uv.x + distMax,0.,1.), uv.y));
+    vec4 cc2 = colorAtIdUv(dTextures, offsetScale, id, vec2(clamp(uv.x - distMax,0.,1.), uv.y));
+    vec4 cc3 = colorAtIdUv(dTextures, offsetScale, id, vec2(uv.x, uv.y + clamp(distMax,0.,1.)));
+    vec4 cc4 = colorAtIdUv(dTextures, offsetScale, id, vec2(uv.x, uv.y - clamp(distMax,0.,1.)));
+
+    return (cc1 + cc2 + cc3 + cc4)  / 4.;
+}
+
 void main() {
 
         vUv_WGS84 = uv_wgs84;
@@ -64,12 +84,79 @@ void main() {
         uvPM.y             = y - float(pmSubTextureIndex);
 
 
-vec4 diffuseColor = vec4(0.,0.,0.,1.);
+/* Texture IMAGERY TEST ********************************************/
+
+if(false){
+
+        vec4 diffuseColor = vec4(0.,0.,0.,1.);
         bool validTexture = false;
         vec4 cc = vec4(0.,0.,0.,1.);
         float dist1 = 0.05;
         vec4 featureColor = vec4(0.,0.,0.,1.);
         float featureTree = 0.;
+
+        for (int layer = 0; layer < 8; layer++) {
+             
+                     if(true /*visibility[layer] */) {
+                        vec4 paramsA = paramLayers[layer];
+                        if(paramsA.w > 0.0) {
+                            bool projWGS84 = paramsA.y == 0.0;
+                            int textureIndex = int(paramsA.x) + (projWGS84 ? 0 : pmSubTextureIndex);
+
+                            vec4 layerColor = AverageColor(
+                                    dTextures_01,
+                                    offsetScale_L01,
+                                    textureIndex,
+                                    projWGS84 ? vUv_WGS84 : uvPM,
+                                    dist1);
+                            featureColor = layerColor; 
+                            
+                            if (layerColor.a > 0.0 ) {
+                                validTexture = true;
+                                float lum = 1.0;
+
+                                if( paramsA.z > 0.0  ) {
+                                    float a = max(0.05,1.0 - length(layerColor.xyz-CWhite.xyz));
+                                    if(paramsA.z > 2.0) {
+                                        a = (layerColor.r + layerColor.g + layerColor.b)*0.333333333;
+                                        layerColor*= layerColor*layerColor;
+                                    }
+                                    lum = 1.0-pow(abs(a),paramsA.z);
+                                }
+                                if(layer == 2) {
+                                    cc = layerColor;
+                                    cc.a = 0.;
+                                    
+                                    // for buildings
+                                    if(featureColor.a>0.1)
+                                        height = 7. + featureColor.r * 5. + featureColor.b * 5.;
+
+                                    //    cc.a = 10. + (featureColor.r + featureColor.g + featureColor.b) * 4.;
+                                   // if(featureColor.r >= 0.95 && featureColor.g >= 0.40 && featureColor.g <= 0.55 && featureColor.b >= 0.3  && featureColor.b <= 0.7) cc.a = 14.;   
+             
+                                }
+
+                                /*
+                                 if(layer == 2) {
+                                    cc = layerColor;
+                                    cc.a = 0.;
+                                    // for trees
+                                    if(featureColor.r >= 0.1 || featureColor.g >= 0.1 || featureColor.b >= 0.1) featureTree = 9. + diffuseColor.r*10. + mod(timing * diffuseColor.g * 100.,5.);   
+             
+                                }
+                                */
+                                diffuseColor = mix( diffuseColor,layerColor, lum*paramsA.w * layerColor.a);
+                            }
+
+                        }
+                    }
+                }
+}
+
+/********************************************/
+
+
+
 
         
         if(loadedTexturesCount[0] > 0) {
@@ -101,7 +188,7 @@ vec4 diffuseColor = vec4(0.,0.,0.,1.);
             #error Must define either RGBA_TEXTURE_ELEVATION, DATA_TEXTURE_ELEVATION or COLOR_TEXTURE_ELEVATION
             #endif
 
-            vPosition = vec4( position +  vNormal  * dv ,1.0 );
+            vPosition = vec4( position +  vNormal  * (dv + height) ,1.0 );
         } else {
             vPosition = vec4( position ,1.0 );
         }

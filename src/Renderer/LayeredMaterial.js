@@ -110,7 +110,7 @@ const LayeredMaterial = function LayeredMaterial(options) {
     this.fragmentShaderHeader += getColorAtIdUv(nbSamplers);
 
     this.fragmentShader = this.fragmentShaderHeader + TileFS;
-    this.vertexShader = PrecisionQualifier + vsOptions + TileVS;
+    this.vertexShader = `${PrecisionQualifier}\nconst int   TEX_UNITS   = ${nbSamplers.toString()};\n` + pitUV + vsOptions + getColorAtIdUv(nbSamplers) + TileVS;
 
     // handle on textures uniforms
     this.textures = [];
