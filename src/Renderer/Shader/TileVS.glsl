@@ -14,8 +14,21 @@ attribute vec3      normal;
 uniform sampler2D   dTextures_00[1];
 uniform vec3        offsetScale_L00[1];
 
+/***** TEST ALEX  */
+
 uniform sampler2D   dTextures_01[TEX_UNITS];
 uniform vec3        offsetScale_L01[TEX_UNITS];
+uniform vec4        paramLayers[8];
+uniform bool        visibility[8];
+
+uniform float       distanceFog;
+uniform int         colorLayersCount;
+uniform vec3        lightPosition;
+
+
+/*********/
+
+
 
 uniform int         loadedTexturesCount[8];
 
@@ -39,11 +52,26 @@ void main() {
 
         vUv_WGS84 = uv_wgs84;
         vUv_PM = uv_pm;
-
+        vec2 uvPM ;
+        uvPM.x  = vUv_WGS84.x;
         vec4 vPosition;
 
         vNormal = normal;
 
+         /* imagery texture work   */
+        float y            = vUv_PM;
+        int pmSubTextureIndex = int(floor(y));
+        uvPM.y             = y - float(pmSubTextureIndex);
+
+
+vec4 diffuseColor = vec4(0.,0.,0.,1.);
+        bool validTexture = false;
+        vec4 cc = vec4(0.,0.,0.,1.);
+        float dist1 = 0.05;
+        vec4 featureColor = vec4(0.,0.,0.,1.);
+        float featureTree = 0.;
+
+        
         if(loadedTexturesCount[0] > 0) {
             vec2    vVv = vec2(
                 vUv_WGS84.x * offsetScale_L00[0].z + offsetScale_L00[0].x,
