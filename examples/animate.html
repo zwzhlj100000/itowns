@@ -456,7 +456,7 @@
                         axis = getLocalObjectAxis(vUv, tClasses, vec4(0., 0., 1., 1.));
                         float mD =  mod(time, 2. * motionDuration) - motionDuration;
                         float timeCoef = mD > 0. ? mD : -mD;
-                        //timeCoef -= mD/2.;
+                        timeCoef -= motionDuration / 2.;
                         nextUVCars = vUv +  timeCoef/*mod(time, motionDuration)*/ * axis * speedCoefficient; // vec2( mod(axis.x * modTime * 4., modVal), mod(axis.y * modTime * 4., modVal)); //vUv + 4. * axis * modTime;
                         //nextUVCars = vec2( vUv.x * (1. + axis.x * modTime*4.), vUv.y  * (1. + axis.y * modTime*4.) );
                         colorClassesDeltaCars = texture2D(tClasses, nextUVCars);
