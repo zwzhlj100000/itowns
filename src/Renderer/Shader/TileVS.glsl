@@ -129,7 +129,7 @@ if(false){
                                     
                                     // for buildings
                                     if(featureColor.a>0.1)
-                                        height = 7. + featureColor.r * 5. + featureColor.b * 5.;
+                                        height = 4. + featureColor.r * 5. + featureColor.b * 5.;
 
                                     //    cc.a = 10. + (featureColor.r + featureColor.g + featureColor.b) * 4.;
                                    // if(featureColor.r >= 0.95 && featureColor.g >= 0.40 && featureColor.g <= 0.55 && featureColor.b >= 0.3  && featureColor.b <= 0.7) cc.a = 14.;   
