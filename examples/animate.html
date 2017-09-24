@@ -29,9 +29,14 @@
 
             <script type="x-shader/x-vertex" id="vertexshader">
                 varying vec2 vUv;
+               // varying float dist;
+
 
                 void main() {
                     vUv = uv;
+                    vec4 vPosition = vec4( position ,1.0 );
+                    vec4 pos = modelMatrix *  vPosition ;
+                    //dist = distance(cameraPosition, pos.xyz);//(distance(cameraPosition, vec3(0.,0.,0.)) - 6500000.) / 1000000.;//pos.xyz); 
                     gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
                 }
             </script>
@@ -45,12 +50,14 @@
                 uniform vec2 screenSize;
                 uniform vec2 pca;
                 uniform bool motionOn;
+                uniform float dist;
 
                 uniform sampler2D tDiffuse;
                 uniform sampler2D tClasses;
                 uniform sampler2D tClouds;
 
                 varying vec2 vUv;
+                
 
                 vec4 color;
                 float coefMix;
@@ -75,6 +82,10 @@
                 // Return true if color is building
                 bool checkBuilding( vec4 color ){
                     return color.r == 1.;
+                }
+                  // Return true if color is building
+                bool checkBuildingOrNoWater( vec4 color ){
+                    return (color.r == 1. ||  color.g == 0.);
                 }
 
                 // Return true if color is Road
@@ -113,18 +124,18 @@
 
                     const float maxDistance = 0.03;
                     float minDistance = maxDistance;
-
+                    float distCoef = dist;//10.; //dist / 100.;
                     vec4 colorClassesDelta = texture2D( tex, uv);
 
-                    if (!checkBuilding (colorClassesDelta)) {
+                    if (!checkBuildingOrNoWater(colorClassesDelta)) {
 
                         for (float i = -maxDistance; i< maxDistance; i+= maxDistance / 10.) {
 
                             for (float j = -maxDistance; j< maxDistance; j+= maxDistance / 10.) {
                             
-                                if (checkBuilding( texture2D(tex, vec2(uv.x + i, uv.y + j)) )){
-                                    float dist = sqrt (i * i + j * j);
-                                    if(dist < minDistance) minDistance = dist;
+                                if (checkBuildingOrNoWater( texture2D(tex, vec2(uv.x + i * distCoef, uv.y + j * distCoef)) )){
+                                    float dista = sqrt (i * i + j * j);
+                                    if(dista < minDistance) minDistance = dista;
                                 }
                             }
                         }
@@ -154,6 +165,15 @@
                         }
                     }
                     return minDistance;
+                }
+
+                bool roadAroundHere(vec2 uv, sampler2D tex){
+                    float d = 0.004;
+                    return texture2D( tex, uv).b  == 1. || 
+                           texture2D( tex, vec2(uv.x - d, uv.y + d) ).b  == 1. || 
+                           texture2D( tex, vec2(uv.x + d, uv.y - d) ).b  == 1. || 
+                           texture2D( tex, vec2(uv.x + d, uv.y + d) ).b  == 1. || 
+                           texture2D( tex, vec2(uv.x - d, uv.y - d) ).b  == 1.; 
                 }
 
 
@@ -418,7 +438,7 @@
 
                 // Fast cheap color check (large interval) for vegetation
                 bool lookLikeVegetation(vec4 col){
-                    return col.g > col.r && col.r > col.b && col.g > 30./255. && col.g < 140./255.;
+                    return col.g > col.r && col.r > col.b && col.g > 30./255. && col.g < 140./255. && col.b < 100./255.;
                 }
 
                 void main() {
@@ -453,14 +473,14 @@
 
                     if(motionOn){
 
-                        if(colorClasses.b  == 1. && ! lookLikeVegetation(currentColor)){           // ROAD
+                        if(/*colorClasses.b  == 1.*/ roadAroundHere(vUv, tClasses) && ! lookLikeVegetation(currentColor)){           // ROAD
                             axis = getLocalObjectAxis(vUv, tClasses, vec4(0., 0., 1., 1.));
                             float mD =  mod(time, 2. * motionDuration) - motionDuration;
                             float timeCoef = mD > 0. ? mD : -mD;
                             timeCoef -= motionDuration / 2.;
                             nextUVCars = vUv +  timeCoef/*mod(time, motionDuration)*/ * axis * speedCoefficient; 
-                            colorClassesDeltaCars = texture2D(tClasses, nextUVCars);
-                            if(colorClassesDeltaCars.b == 1. && ! lookLikeVegetation(texture2D( tDiffuse, nextUVCars))){
+                            //colorClassesDeltaCars = texture2D(tClasses, nextUVCars);
+                            if(/*colorClassesDeltaCars.b == 1. */roadAroundHere(nextUVCars, tClasses)&& ! lookLikeVegetation(texture2D( tDiffuse, nextUVCars))){
                                 color = averageTexture(nextUVCars, tDiffuse); //minDistance = 1.; //texture2D( tDiffuse, nextUVCars); minDistance = 1.;
                             }
                             float distToBorders = checkRoadBorders(vUv/*nextUVCars*/, tClasses);
@@ -475,7 +495,7 @@
                                 if(colorClasses.g == 1.){    // WATER
                                     axis =  pca; // getLocalObjectAxisWater4(vUv, tClasses, vec4(0., 1., 0., 1.));
                                     //nextUV = vUv + mod(time, 0.1) * axis;
-                                    vec2 uvTraj = vUv + mod(time, 0.1) * axis;
+                                    vec2 uvTraj = vUv + mod(time, 0.4) * axis;
                                     vec2 perioNoise = vec2( mod(uvTraj.x, 0.001 ),  mod(uvTraj.y, 0.001 ));
                                     nextUV = uvTraj + perioNoise; //vUv + mod(time, 0.1) * axis + mod(vUv.y, 0.001); //mod(sqrt(axis.x * vUv.x + axis.y * vUv.y), 0.001);//mod(vUv.x, 0.001); // We introduce a periodic effect to have different speed on each pixel
                              
@@ -507,8 +527,8 @@
                     // CLOUDS
                     //vec4 cloudColor = texture2D(tClouds, vec2( vUv.x + 1. * time, vUv.y + 1. * time) );
                    // color = mix(color, vec4(cloudColor.r,cloudColor.r,cloudColor.r,1.), cloudColor.r - 0.1);  // -0.1 to erase "noise"    
-
-                    gl_FragColor =  color; //vec4( abs(axis.x) , abs(axis.y) , 0., 1.); // color; // mix(color, colorClasses, 0.5); // color; // vec4(vec2( abs(axis.x) * 5., abs(axis.y) * 5.), 0., 1.);// color; //vec4(vec2( abs(axis.x) * 5., abs(axis.y) * 5.), 0., 1.);//color; // mix(color, colorClasses, 0.5); //vec4(vec3(minDistance * 100.), 1.); //color; // colorClasses
+                    float d = 1. - 20. * minDistance;
+                    gl_FragColor = color;//vec4(vec3(d), 1.); //color;//vec4(vec3(d),1.); //color; //vec4( abs(axis.x) , abs(axis.y) , 0., 1.); // color; // mix(color, colorClasses, 0.5); // color; // vec4(vec2( abs(axis.x) * 5., abs(axis.y) * 5.), 0., 1.);// color; //vec4(vec2( abs(axis.x) * 5., abs(axis.y) * 5.), 0., 1.);//color; // mix(color, colorClasses, 0.5); //vec4(vec3(minDistance * 100.), 1.); //color; // colorClasses
 
                 }
 
@@ -591,11 +611,52 @@
                   menuGlobe.addGUI('Motion', false,
                     (newValue) => {quad.material.uniforms["motionOn"].value = newValue; globeView.setClassificationOn(newValue) });
 
+                  /* global dat,viewerDiv, itowns */
+                var HIDE_KEY_CODE = 72;
 
+                document.addEventListener('keydown', (event) => {
+                      const keyCode = event.keyCode;
+
+                      if (keyCode ===  HIDE_KEY_CODE) {
+                       menuGlobe.togHide();
+                        // do not alert when only Control key is pressed.
+                        return;
+                      }
+
+                }, false);
 
                 // Simple postprocessing setup
                 let MotionOn = false;
                 let firstPCA = true;
+
+                //var positionOnGlobe = { longitude: 2.351323, latitude: 48.856712, altitude: 25000000 };
+               // var scene = new itowns.THREE.Scene();
+
+                var geometry = new itowns.THREE.PlaneGeometry( 1000, 500, 8 );
+                var material = new itowns.THREE.MeshBasicMaterial( {transparent: true, opacity:0.7, depthWrite: false, depthTest: false, alphaMap: new itowns.THREE.TextureLoader().load( "cloud.jpg" ) ,side: itowns.THREE.DoubleSide} );
+                var planeCloud = new itowns.THREE.Mesh( geometry, material );
+                planeCloud.name = "planeCloud";
+
+
+                // get the position on the globe, from the camera
+                var cameraTargetPosition = globeView.controls.getCameraTargetGeoPosition();
+
+                // position of the mesh
+                var meshCoord = cameraTargetPosition;
+                meshCoord.setAltitude(cameraTargetPosition.altitude() + 200);
+
+                // position and orientation of the mesh
+                planeCloud.position.copy(meshCoord.as(globeView.referenceCrs).xyz().addScalar(100));
+                planeCloud.lookAt(new itowns.THREE.Vector3(0, 0, 0));
+                //mesh.rotateX(Math.PI / 2);
+
+                // update coordinate of the mesh
+                planeCloud.updateMatrixWorld();
+
+                globeView.scene.add( planeCloud );
+                // make the object usable from outside of the function
+                globeView.planeCloud = planeCloud;
+
 
                 const postprocessScene = new itowns.THREE.Scene();
                 const quad = new itowns.THREE.Mesh( new itowns.THREE.PlaneBufferGeometry( 2, 2 ), null);
@@ -612,7 +673,8 @@
                         "scale":    { value: 1.0 },
                         "time":     { value: 0.  },
                         "pca":      { value: new itowns.THREE.Vector2() },
-                        "motionOn": { value: false}
+                        "motionOn": { value: false},
+                        "dist":    { value: 1. },
                     },
                     vertexShader: document.getElementById('vertexshader').textContent,
                     fragmentShader: document.getElementById('fragmentshader').textContent,
@@ -664,6 +726,9 @@
                         var segmentation = new itowns.Segmentation();
                         segmentation.setImage(globeView.rttTexture, globeView.rttTextureCLASSES);//g.fullSizeRenderTarget);
                         globeView.pca = segmentation.computePCA(1); //console.log(globeView.pca);
+                        
+                        quad.material.uniforms["dist"].value = Math.max(1., 2 - (globeView.camera.camera3D.position.length() - 6366083) / 1000.) ;
+                       // console.log(quad.material.uniforms["dist"].value);
                         //cvTexture = segmentation.extractCars(); cvTexture = segmentation.computePCA(1);
                     } /*else
                         cvTexture = globeView.rttTexture;*/
@@ -684,11 +749,14 @@
 */
 
                     cvTexture = globeView.rttTexture;
+                    planeCloud.position.z += 0.2;
+                    planeCloud.updateMatrixWorld();
 
                     quad.material.uniforms["tDiffuse"].value = cvTexture;//g.fullSizeRenderTarget.texture;
                     quad.material.uniforms["tClasses"].value = globeView.rttTextureCLASSES;//g.fullSizeRenderTarget.texture;
                     quad.material.uniforms["time"].value += 0.00008;
                     quad.material.uniforms["pca"].value = globeView.pca;
+                    //quad.material.uniforms["dist"].value = globeView.pca;
                             // quad.material.uniforms["tSize"].value.set(
                             // g.fullSizeRenderTarget.width, g.fullSizeRenderTarget.height);
 

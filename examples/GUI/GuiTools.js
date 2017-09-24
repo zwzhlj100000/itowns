@@ -4,7 +4,7 @@
  * Description: Classe pour créer un menu.
  */
 
- /* global dat,viewerDiv, itowns */
+ 
 
 dat.GUI.prototype.removeFolder = function removeFolder(name) {
     var folder = this.__folders[name];
@@ -24,6 +24,28 @@ dat.GUI.prototype.hideFolder = function hideFolder(name, value) {
     }
     folder.__ul.hidden = value;
 };
+
+
+dat.GUI.prototype.toggleHide = function(domel) {
+    if(domel.hasAttribute("hidden")) {
+        domel.removeAttribute("hidden");
+    } else {
+        domel.setAttribute("hidden", true);
+    }
+};
+
+dat.GUI.prototype.hide = function() {
+    this.domElement.setAttribute("hidden", true);
+};
+
+dat.GUI.prototype.show = function() {
+    this.domElement.removeAttribute("hidden");
+};
+dat.GUI._keydownHandler = function (e) {
+      if (document.activeElement.type !== 'text' && (e.which === HIDE_KEY_CODE || e.keyCode === HIDE_KEY_CODE)) {
+        GUI.toggleHide();
+      }
+    };
 
 function GuiTools(domId, view, w) {
     var width = w || 245;
@@ -99,3 +121,9 @@ GuiTools.prototype.addGUI = function addGUI(name, value, callback) {
 GuiTools.prototype.hideFolder = function hideFolder(nameLayer, value) {
     this.colorGui.hideFolder(nameLayer, value);
 };
+
+
+GuiTools.prototype.togHide = function togHide(nameLayer, value) {
+    this.colorGui.toggleHide(this.gui.domElement);
+};
+

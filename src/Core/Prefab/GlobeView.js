@@ -391,7 +391,9 @@ GlobeView.prototype.getPickingPositionFromDepth = function getPickingPositionFro
     const dim = this.mainLoop.gfxEngine.getWindowSize();
     mouse = mouse || dim.clone().multiplyScalar(0.5);
 
-
+    if(typeof this.planeCloud !== 'undefined'){
+        this.planeCloud.visible = false;
+    }
     var camera = this.camera.camera3D;
     this.camera.update();
 
@@ -443,6 +445,10 @@ GlobeView.prototype.getPickingPositionFromDepth = function getPickingPositionFro
 
     if (pickWorldPosition.length() > 10000000)
         { return undefined; }
+
+    if(typeof this.planeCloud !== 'undefined'){
+        this.planeCloud.visible = true;
+    }
 
     return pickWorldPosition;
 };

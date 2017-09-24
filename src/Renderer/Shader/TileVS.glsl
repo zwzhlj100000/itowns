@@ -86,7 +86,7 @@ void main() {
 
 /* Texture IMAGERY TEST ********************************************/
 
-if(false){
+if(true){
 
         vec4 diffuseColor = vec4(0.,0.,0.,1.);
         bool validTexture = false;
@@ -190,7 +190,7 @@ if(false){
 
             vPosition = vec4( position +  vNormal  * (dv + height) ,1.0 );
         } else {
-            vPosition = vec4( position ,1.0 );
+            vPosition = vec4( position +  vNormal  * height ,1.0 );
         }
 
         gl_Position = projectionMatrix * modelViewMatrix * vPosition;
