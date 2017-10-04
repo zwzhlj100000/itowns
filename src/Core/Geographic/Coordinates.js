@@ -155,13 +155,23 @@ function _convert(coordsIn, newCrs, target) {
 
             // Verify that coordinates are stored in reference unit.
             const refUnit = crsToUnit(coordsIn.crs);
-            if (coordsIn._internalStorageUnit != coordsIn.crs) {
+            if (coordsIn._internalStorageUnit != refUnit) {
                 if (coordsIn._internalStorageUnit == UNIT.DEGREE && refUnit == UNIT.RADIAN) {
                     val0 = coordsIn.longitude(UNIT.RADIAN);
                     val1 = coordsIn.latitude(UNIT.RADIAN);
+                    //if (coordsIn.crs == 'EPSG:3857') {
+                    //    val1 = (val1 + 85.0511) / (2 * 85.0511) - 0.5;
+                    //    val1 = mE.degToRad(val1 * 180);
+                    //} else {
+                    //
+                    //}
                 } else if (coordsIn._internalStorageUnit == UNIT.RADIAN && refUnit == UNIT.DEGREE) {
                     val0 = coordsIn.longitude(UNIT.DEGREE);
                     val1 = coordsIn.latitude(UNIT.DEGREE);
+                    val1 = Math.min(84, Math.max(-86, val1));
+                    //if (newCrs == 'EPSG:3857') {
+                    //    val1 = (val1 / 180 + 0.5) * (2 * 85.0511) -85.0511;
+                    //}
                 }
             }
 

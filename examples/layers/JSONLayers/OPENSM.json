@@ -1,15 +1,17 @@
 {
     "type": "color",
-    "protocol": "wmtsc",
+    "protocol": "tms",
     "networkOptions": { "crossOrigin" : "anonymous" },
     "id": "OPENSM",
-    "customUrl": "http://a.basemaps.cartocdn.com/voyager/%TILEMATRIX/%COL/%ROW.png",
+    "url": "http://3d.oslandia.com:8080/styles/klokantech-basic/${z}/${x}/${y}.png",
     "options": {
+        "tileMatrixSet": "PM",
         "attribution": {
             "name":"CARTO",
             "url": "https://carto.com/"
         },
-        "tileMatrixSet": "PM",
         "mimetype": "image/png"
-    }
+    },
+    "projection": "EPSG:3857",
+    "extent": [-20026376.39, 20026376.39, -20048966.10, 20048966.10]
 }

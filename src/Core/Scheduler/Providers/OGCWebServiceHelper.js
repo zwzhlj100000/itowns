@@ -3,8 +3,9 @@ import Fetcher from './Fetcher';
 import CacheRessource from './CacheRessource';
 import IoDriver_XBIL from './IoDriver_XBIL';
 import Projection from '../../Geographic/Projection';
+import { UNIT } from '../../Geographic/Coordinates';
 import Extent from '../../Geographic/Extent';
-
+import MathExt from '../../Math/MathExtended';
 
 export const SIZE_TEXTURE_TILE = 256;
 
@@ -103,24 +104,72 @@ export default {
                 projection.getCoordWMTS_WGS84(tileCoord, tile.extent, tileMatrixSet);
         }
     },
+/*
+    alignOnTMSGrid(tmsCoord, grid) {
+        const e = tmsCoord;
+
+        const tileCount = Math.pow(2, e.zoom);
+        const size = grid.dimensions();
+        size.x /= tileCount;
+        size.y /= tileCount;
+        this._values[0] = grid.west() + e.col * size.x;
+        this._values[1] = grid.west() + (e.col + 1) * size.x;
+        this._values[2] = grid.north() - (e.row + 1) * size.y;
+        this._values[3] = grid.north() - e.row * size.y;
+
+        const t = itowns.OGCHelper.computeTMSCoordinates(tile, grid)[0];
+        console.log(e, t);
+    }
+*/
+
     computeTMSCoordinates(tile, extent) {
-        if (tile.extent.crs() != extent.crs()) {
-            throw new Error('Unsupported configuration. TMS is only supported when geometry has the same crs than TMS layer');
-        }
-        const c = tile.extent.center();
+        const e = tile.extent.as(extent.crs());
         const layerDimension = extent.dimensions();
 
         // Each level has 2^n * 2^n tiles...
         // ... so we count how many tiles of the same width as tile we can fit in the layer
-        const tileCount = Math.round(layerDimension.x / tile.extent.dimensions().x);
+        let tileCount = THREE.Math.nearestPowerOfTwo(Math.round(layerDimension.x / e.dimensions().x));
         // ... 2^zoom = tilecount => zoom = log2(tilecount)
-        const zoom = Math.floor(Math.log2(tileCount));
+        // let zoom = tile.level + 1;
+        let zoom = Math.floor(Math.log2(tileCount));
+        tileCount = Math.pow(2, zoom);
 
-        // Now that we have computed zoom, we can deduce x and y (or row / column)
+        const c = e.center();
         const x = (c.x() - extent.west()) / layerDimension.x;
-        const y = (extent.north() - c.y()) / layerDimension.y;
 
-        return [new Extent('TMS', zoom, Math.floor(y * tileCount), Math.floor(x * tileCount))];
+        const result = [];
+        // hack for now
+        if (tile.extent.crs() === extent.crs()) {
+            // Now that we have computed zoom, we can deduce x and y (or row / column)
+            const y = (extent.north() - c.y()) / layerDimension.y;
+            result.push(new Extent('TMS', zoom, Math.floor(y * tileCount), Math.floor(x * tileCount)));
+        } else if (tile.extent.crs() == 'EPSG:4326') {
+            // Code from Projection.js
+            function WGS84LatitudeClamp(latitude) {
+                var min = -86 / 180 * Math.PI;
+                var max = 84 / 180 * Math.PI;
+
+                latitude = Math.max(min, latitude);
+                latitude = Math.min(max, latitude);
+
+                return latitude;
+            }
+
+            function WGS84ToY(latitude) {
+                return 0.5 - Math.log(Math.tan(MathExt.PI_OV_FOUR + latitude * 0.5)) * MathExt.INV_TWO_PI;
+            }
+
+            const tileCount = Math.pow(2, zoom);
+            let y1 = Math.floor(WGS84ToY(WGS84LatitudeClamp(tile.extent.north(UNIT.RADIAN))) * tileCount);
+            let y2 = Math.ceil(WGS84ToY(WGS84LatitudeClamp(tile.extent.south(UNIT.RADIAN))) * tileCount) - 1;
+
+            for (let y = y2; y >= y1; y--) {
+                result.push(new Extent('TMS', zoom, Math.max(0, y), Math.floor(x * tileCount)));
+            }
+        } else {
+            throw new Error(`Can't display a TMS layer using ${extent.crs()} crs on a geometry using ${tile.extent.crs()} crs`);
+        }
+        return result;
     },
     WMTS_WGS84Parent(cWMTS, levelParent, pitch) {
         const diffLevel = cWMTS.zoom - levelParent;

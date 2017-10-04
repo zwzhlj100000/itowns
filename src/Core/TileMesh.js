@@ -209,6 +209,8 @@ TileMesh.prototype.getZoomForLayer = function getCoordsForLayer(layer) {
     if (layer.protocol.indexOf('wmts') == 0) {
         OGCWebServiceHelper.computeTileMatrixSetCoordinates(this, layer.options.tileMatrixSet);
         return this.wmtsCoords[layer.options.tileMatrixSet][0].zoom;
+    } else if (layer.protocol == 'tms') {
+        return OGCWebServiceHelper.computeTMSCoordinates(this, layer.extent)[0].zoom;
     } else {
         return this.level;
     }

@@ -18,7 +18,7 @@ var camera = new itowns.THREE.OrthographicCamera(
 
 // Instanciate PlanarView
 var view = new itowns.PlanarView(
-        viewerDiv, extent, { renderer: renderer, maxSubdivisionLevel: 10, camera: camera });
+        viewerDiv, extent, { renderer: renderer, maxSubdivisionLevel: 12, camera: camera });
 
 var onMouseWheel = function onMouseWheel(event) {
     var change = 1 - (Math.sign(event.wheelDelta || -event.detail) * 0.1);
@@ -48,8 +48,7 @@ view.addLayer({
     type: 'color',
     protocol: 'tms',
     id: 'OPENSM',
-    // eslint-disable-next-line no-template-curly-in-string
-    url: 'http://c.tile.stamen.com/watercolor/${z}/${x}/${y}.jpg',
+    url: 'http://3d.oslandia.com:8080/styles/klokantech-basic/${z}/${x}/${y}.png',
     networkOptions: { crossOrigin: 'anonymous' },
     extent: [extent.west(), extent.east(), extent.south(), extent.north()],
     projection: 'EPSG:3857',
