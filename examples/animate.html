@@ -83,7 +83,12 @@
                 bool checkBuilding( vec4 color ){
                     return color.r == 1.;
                 }
-                  // Return true if color is building
+
+                // Return true if pixel is not water or is building (for bridge test!)
+                bool isNoWater( vec4 color ){
+                    return (color.r == 1. ||  color.g == 0.);
+                }
+
                 bool checkBuildingOrNoWater( vec4 color ){
                     return (color.r == 1. ||  color.g == 0.);
                 }
@@ -119,8 +124,13 @@
                 }
 
     */
+                
+
+
                 // This function compute distance between original pixel and other class object
-                float checkDistanceToObstacle(vec2 uv, sampler2D tex){
+                // Used mainly for water
+                // 400 iterations per pix (2 * 10 * 2 *10)
+                float checkDistanceToObstacleORIGINALE_SAVED(vec2 uv, sampler2D tex){
 
                     const float maxDistance = 0.03;
                     float minDistance = maxDistance;
@@ -129,9 +139,9 @@
 
                     if (!checkBuildingOrNoWater(colorClassesDelta)) {
 
-                        for (float i = -maxDistance; i< maxDistance; i+= maxDistance / 10.) {
+                        for (float i = -maxDistance; i < maxDistance; i += maxDistance / 10.) {
 
-                            for (float j = -maxDistance; j< maxDistance; j+= maxDistance / 10.) {
+                            for (float j = -maxDistance; j < maxDistance; j += maxDistance / 10.) {
                             
                                 if (checkBuildingOrNoWater( texture2D(tex, vec2(uv.x + i * distCoef, uv.y + j * distCoef)) )){
                                     float dista = sqrt (i * i + j * j);
@@ -148,6 +158,52 @@
                     return minDistance;
                 }
 
+                // This function compute distance between original pixel and other class object
+                // Used mainly for water
+                float checkDistanceToObstacle(vec2 uv, sampler2D tex){
+
+                    const float maxDistance = 18.; //0.04;  // Max distance of search in meters (dicho)
+                    const float nbIteration = 10.;  // Nb iteration to test and get more precise (1/2^nbIt)
+                    const float incAngular = M_PI / 8.;  // Angular increment
+                    float distCoef = dist; //10.; //dist / 100.;
+                    vec4 colorClassesDelta = texture2D( tex, uv);
+                    float currentDistance = maxDistance / distCoef;
+                    float currentDelta;
+                    float currentPos = maxDistance / distCoef;
+                    float direction = 1.;
+                    float distC;
+
+                    for (float i = 0.; i < 2. * M_PI; i += incAngular){
+
+                        // First test if at max distance we go beyond water
+                        vec2 coord = vec2( uv.x + maxDistance / distCoef * cos(i), uv.y + maxDistance / distCoef * sin(i));
+                        vec4 col = texture2D(tex, coord);
+                        if(isNoWater(col)){
+
+                            for (float a = 1.; a < nbIteration; ++a) {
+
+                               currentDelta = (maxDistance / distCoef) / pow(2., a);
+
+                               distC = currentPos - direction * currentDelta;
+
+                               vec2 currentCoord = vec2( uv.x + distC * cos(i), uv.y + distC * sin(i));
+
+                               vec4 color = texture2D( tex, currentCoord);
+
+                               direction = isNoWater(color) ? 1. : -1.;
+
+                               currentPos = distC;
+                                   
+                            }   
+                            currentDistance = min(currentDistance, currentPos);
+                        }
+
+                    }
+
+                    return currentDistance * distCoef / maxDistance; //maxDistance; // / maxDistance;
+                }
+
+
 
                 // Check distance from parameter uv to border of road
                 float checkRoadBorders(vec2 uv, sampler2D tex){
@@ -155,8 +211,8 @@
                     const float maxDistance = 0.01;
                     float minDistance = maxDistance;
 
-                    for (float i = -maxDistance; i< maxDistance; i+= maxDistance / 10.) {
-                        for (float j = -maxDistance; j< maxDistance; j+= maxDistance / 10.) {
+                    for (float i = -maxDistance; i < maxDistance; i += maxDistance / 10.) {
+                        for (float j = -maxDistance; j < maxDistance; j += maxDistance / 10.) {
                         
                            if (texture2D(tex, vec2(uv.x + i, uv.y + j)).b != 1.){  // No road pixel
                                 float dist = sqrt (i * i + j * j);
@@ -508,7 +564,7 @@
                                     
                                     if( colorClassesDelta == vec4(0., 1., 0., 1.)) {  // if it is only water
                                         minDistance = checkDistanceToObstacle(nextUV, tClasses);  // Check obstacle and also end of texture (uv.x> 1 for example)
-                                        color = mix(currentColor, nextTexture, min(minDistance * (1. / 0.03), 1.) );
+                                        color = mix(currentColor, nextTexture, clamp(minDistance, 0., 1.)); // vec4(vec3(minDistance), 1.); 
                                     }
 
                                     // We test if close to limit of frame uv to have smooth progressive blending on boarders
@@ -674,7 +730,7 @@
                         "time":     { value: 0.  },
                         "pca":      { value: new itowns.THREE.Vector2() },
                         "motionOn": { value: false},
-                        "dist":    { value: 1. },
+                        "dist":    { value: 1. },  // Represent the size in meters for a UV (U) unit (whole screen width)
                     },
                     vertexShader: document.getElementById('vertexshader').textContent,
                     fragmentShader: document.getElementById('fragmentshader').textContent,
@@ -726,9 +782,9 @@
                         var segmentation = new itowns.Segmentation();
                         segmentation.setImage(globeView.rttTexture, globeView.rttTextureCLASSES);//g.fullSizeRenderTarget);
                         globeView.pca = segmentation.computePCA(1); //console.log(globeView.pca);
-                        
-                        quad.material.uniforms["dist"].value = Math.max(1., 2 - (globeView.camera.camera3D.position.length() - 6366083) / 1000.) ;
-                       // console.log(quad.material.uniforms["dist"].value);
+                        quad.material.uniforms["dist"].value =  2 * (globeView.camera.camera3D.position.length() - 6366050) * Math.tan((globeView.camera.camera3D.fov * globeView.camera.camera3D.aspect) / 360 * Math.PI);//Math.max(1., 2 - (globeView.camera.camera3D.position.length() - 6366083) / 1000.) ;
+                      //  console.log(quad.material.uniforms["dist"].value, globeView.camera.camera3D.position.length() - 6366050, 
+                      //    globeView.controls.getCameraTargetGeoPosition());//globeView.camera.camera3D.fov, globeView.camera.position().as('EPSG:4326').altitude());
                         //cvTexture = segmentation.extractCars(); cvTexture = segmentation.computePCA(1);
                     } /*else
                         cvTexture = globeView.rttTexture;*/

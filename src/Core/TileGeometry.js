@@ -80,7 +80,7 @@ TileGeometry.prototype.computeBuffers = function computeBuffers(params, builder)
     // Create temp buffers
     var scratchBuffers = new Buffers();
 
-    var nSeg = 96;//params.segment || 12;
+    var nSeg = 12;//params.segment || 12;
     // segments count :
     // Tile : (nSeg + 1) * (nSeg + 1)
     // Skirt : 8 * (nSeg - 1)

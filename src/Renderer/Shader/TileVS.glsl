@@ -86,7 +86,7 @@ void main() {
 
 /* Texture IMAGERY TEST ********************************************/
 
-if(true){
+if(false){
 
         vec4 diffuseColor = vec4(0.,0.,0.,1.);
         bool validTexture = false;
