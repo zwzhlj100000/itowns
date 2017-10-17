@@ -162,6 +162,7 @@ export default {
             const tileCount = Math.pow(2, zoom);
             let y1 = Math.floor(WGS84ToY(WGS84LatitudeClamp(tile.extent.north(UNIT.RADIAN))) * tileCount);
             let y2 = Math.ceil(WGS84ToY(WGS84LatitudeClamp(tile.extent.south(UNIT.RADIAN))) * tileCount) - 1;
+            y2 = Math.min(tileCount - 1, y2);
 
             for (let y = y2; y >= y1; y--) {
                 result.push(new Extent('TMS', zoom, Math.max(0, y), Math.floor(x * tileCount)));
