@@ -28,7 +28,7 @@ function showRosData(serverUrl, topicName, messageType) {
 
     view = new itowns.View('EPSG:3946', viewerDiv, { renderer: { logarithmicDepthBuffer: true } });
     view.mainLoop.gfxEngine.renderer.setClearColor(0x555555);
-    controls = new itowns.FirstPersonControls(view, { focusOnClick: true });
+    controls = new itowns.FlyControls(view, { focusOnClick: true });
 
     // Configure ros provider
     var ros = new ROSLIB.Ros({
@@ -77,7 +77,7 @@ function showRosData(serverUrl, topicName, messageType) {
     });
     
     listener.subscribe(function(message) {
-        console.log('Received message on ' + listener.name + ': ' + message.fields);
+        console.log('Received message on ', listener.name , ': ' , message);
 
         switch(messageType){
             case 'sensor_msgs/PointCloud2': handlePointCloud2(message); break;
@@ -124,7 +124,7 @@ function showRosData(serverUrl, topicName, messageType) {
 
     }
 
-    loadPoints();
+   // loadPoints();
     animateNewDataReceived();
 
     function handlePointCloud2(message){
@@ -134,47 +134,71 @@ function showRosData(serverUrl, topicName, messageType) {
 
         var ptSize = message.point_step;
         var rowSize = message.row_step;
-        var numPoints = message.height;
+        var numPoints = message.height * message.width;
 
-        var buf = new ArrayBuffer(numPoints * rowSize);
+        var buf = new ArrayBuffer(message.height * rowSize);
         var bigEndian = message.is_bigendian;
 
         var bufView = new DataView(buf);
-        for (var i=0, strLen=numPoints * rowSize; i < strLen; i++) {
+        for (var i=0, strLen=message.height * rowSize; i < strLen; i++) {
             bufView.setUint8(i, atobs.charCodeAt(i), !bigEndian);
         }
 
         var float32view   = new Float32Array(buf);
-        var uint32View    = new Uint32Array(buf);
+        var float64View   = new Float64Array(buf);
 
         var geometry = new itowns.THREE.BufferGeometry();
         var positions = new Float32Array( numPoints * 3 );
         var colors =    new Float32Array( numPoints * 3 );
 
         for (var i=0; i<numPoints; i++) {
-            var pIdx = i * 3;
-            var rIdx = i * 4;
 
-            positions[pIdx+0] = float32view[rIdx+1];
-            positions[pIdx+1] = float32view[rIdx+2];
-            positions[pIdx+2] = float32view[rIdx+3];
-            colors[pIdx+0] = 1.0;
-            colors[pIdx+1] = 1.0;
-            colors[pIdx+2] = 1.0;
+            var pIdx = i * 3;
+            var rIdx = i * 8 ;
+
+            positions[pIdx+0] = float32view[rIdx] ;
+            positions[pIdx+1] = float32view[rIdx+2] ;
+            positions[pIdx+2] = -float32view[rIdx+1];
+
+            var intensity = 50; //float64View[rIdx+5]/50;
+            var hsl = "hsl(" + intensity + ", 100%, 50%)";
+            var color = new itowns.THREE.Color(hsl); 
+            
+            colors[pIdx+0] = color.r; //float32view[rIdx+] / 50.;
+            colors[pIdx+1] = color.g; //float32view[rIdx+7] / 50.;
+            colors[pIdx+2] = color.b; //float32view[rIdx+8] / 50.;
         }
+        console.log(colors);
         geometry.addAttribute( 'position', new itowns.THREE.BufferAttribute( positions, 3 ) );
         geometry.addAttribute( 'color', new itowns.THREE.BufferAttribute( colors, 3 ) );
         geometry.computeBoundingSphere();
 
-        var material = new itowns.THREE.PointsMaterial( { transparent: true, opacity: 0, size: 0.01, vertexColors: itowns.THREE.VertexColors } );
+        var material = new itowns.THREE.PointsMaterial( { transparent: true, opacity: 0., size: 0.04, vertexColors: itowns.THREE.VertexColors } );
         points = new itowns.THREE.Points( geometry, material );
-        points.scale.set(0.5,0.5,0.5);
+        points.frustumCulled = false;
+        points.scale.set(0.91,1.,1.);
+        points.updateMatrixWorld();
+        //console.log(points);
+
+
+        pointclouds.push(points);
         view.scene.add(points);
+
+
+        var geometry = new itowns.THREE.SphereGeometry( 0.5, 8, 8 );
+        var material = new itowns.THREE.MeshBasicMaterial( {wireframe: true, color: 0xffff00, side: itowns.THREE.DoubleSide} );
+        var sphere = new itowns.THREE.Mesh( geometry, material );
+
+        view.scene.add( sphere );
+            
+        view.camera.camera3D.fov = 80;
+
         if(!cameraPositioned) {
             cameraPositioned = true;
-            var firstPointPos = new THREE.Vector3().fromArray(scratchBuffers.position);
-            placeCamera(firstPointPos.clone().add(new THREE.Vector3(0,0,20)), firstPointPos);
+            var firstPointPos = new itowns.THREE.Vector3().fromArray(positions);    
+                placeCamera(firstPointPos.clone().add(new itowns.THREE.Vector3(10,10,10)), firstPointPos);
         }
+        
     }
 
 
@@ -196,10 +220,10 @@ function showRosData(serverUrl, topicName, messageType) {
         for(var i = 0; i < pointclouds.length; ++i){
             var p = pointclouds[i];
             if(p.scale.x < 1){
-                p.scale.multiplyScalar(1.01);
+                p.scale.x *= 1.01;//multiplyScalar(1.1);
                 p.updateMatrixWorld(true);
             }
-            if(p.material.opacity < 1) p.material.opacity += 0.01;
+            if(p.material.opacity < 0.5) p.material.opacity += 0.005;
             
         }
         view.notifyChange(true);
