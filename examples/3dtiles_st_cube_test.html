@@ -170,7 +170,7 @@
             );
 
             $3dTilesLayerRequestVolume.name = 'RequestVolume';
-            $3dTilesLayerRequestVolume.url = 'http://localhost:8080/cache_test/root/0/0/0.json';
+            $3dTilesLayerRequestVolume.url = 'http://localhost:8080/cache_test/testjson5/root.json';
             $3dTilesLayerRequestVolume.protocol = '3d-tiles';
             $3dTilesLayerRequestVolume.overrideMaterials = true;  // custom cesium shaders are not functional
             $3dTilesLayerRequestVolume.type = 'geometry';
@@ -214,15 +214,19 @@
                     var interAttributes = intersects[i].object.geometry.attributes;
                     if (interAttributes) {
                         if (interAttributes._BATCHID) {
+                            console.log("ici Paris")
+                            console.log(intersects[i])
                             var face = intersects[i].face.a;
                             var batchID = interAttributes._BATCHID.array[face];
                             var batchTable = findBatchTableParent(intersects[i].object);
+                            console.log(batchTable)
 
                             htmlInfo.innerHTML +='<li><b> Batch id: </b>'+ batchID +'</li>';
                             Object.keys(batchTable).map(function(objectKey) {
+                            console.log(objectKey)
                                 var value = batchTable[objectKey][batchID];
                                 // if the value is a integer or not
-                                var info = Number.isInteger(value) ? value.toString() : value.toFixed(3).toString();
+                                var info = Number.isInteger(value) ? value.toString() : value;
                                 htmlInfo.innerHTML +='<li><b>' + objectKey.toString() + ': </b>'+ info +'</li>';
                                 return true;
                             });
