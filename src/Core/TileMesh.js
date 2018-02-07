@@ -188,7 +188,7 @@ TileMesh.prototype.getCoordsForLayer = function getCoordsForLayer(layer) {
             throw new Error('unsupported projection wms for this viewer');
         }
     } else if (layer.protocol == 'tms') {
-        return OGCWebServiceHelper.computeTMSCoordinates(this, layer.extent, layer.origin);
+        return OGCWebServiceHelper.computeTMSCoordinates(this, layer.extent);
     } else {
         return [this.extent];
     }
