@@ -1,7 +1,6 @@
+var fs = require('fs');
 var path = require('path');
 var webpack = require('webpack');
-
-var commonConfig = require('./webpack-common.config.js');
 
 var definePlugin = new webpack.DefinePlugin({
     __DEBUG__: JSON.stringify(process.env.NODE_ENV === 'development'),
@@ -11,6 +10,29 @@ var providePlugin = new webpack.ProvidePlugin({
     TextDecoder: [path.resolve(__dirname, 'src/utils/polyfill'), 'TextDecoder'],
     TextEncoder: [path.resolve(__dirname, 'src/utils/polyfill'), 'TextEncoder'],
 });
+
+/*
+   configuring babel:
+   - when babel runs alone (for `test-unit` for instance), we let him deal with
+   ES6 modules, because node doesn't support them yet (planned for v10 lts).
+   - however, webpack also has ES6 module support and these 2 don't play well
+   together. When running webpack (either `build` or `start` script), we prefer
+   to rely on webpack loaders (much more powerful and gives more possibilities),
+   so let's disable modules for babel here.
+*/
+// Note that we don't support .babelrc in parent folders
+var babelrc = fs.readFileSync(path.resolve(__dirname, '.babelrc'));
+var babelConf = JSON.parse(babelrc);
+var newPresets = [];
+for (var preset of babelConf.presets) {
+    if (!Array.isArray(preset)) {
+        preset = [preset];
+    }
+    preset.push({ modules: false });
+    newPresets.push(preset);
+}
+babelConf.presets = newPresets;
+babelConf.babelrc = false; // disabel babelrc reading, as we've just done it
 
 module.exports = {
     entry: {
@@ -50,17 +72,8 @@ module.exports = {
                     path.resolve(__dirname, 'utils'),
                 ],
                 loader: 'babel-loader',
-                // Please consider modifying .babelrc too
-                // .babelrc is used for transpiling src/ into lib/ in the prepublish
-                // phase, see package.json
-                options: {
-                    presets: [['es2015', { modules: false } ]],
-                    plugins: ['transform-runtime'],
-                    babelrc: false,
-                },
+                options: babelConf,
             },
-            commonConfig.glslLoader,
-            commonConfig.jsonLoader,
         ],
     },
     devServer: {
