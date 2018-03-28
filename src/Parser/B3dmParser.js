@@ -5,6 +5,7 @@ import BatchTableParser from './BatchTableParser';
 import Capabilities from '../Core/System/Capabilities';
 import PrecisionQualifier from '../Renderer/Shader/Chunk/PrecisionQualifier.glsl';
 import utf8Decoder from '../utils/Utf8Decoder';
+import BatchedMaterial from '../Renderer/BatchedMaterial';
 
 const matrixChangeUpVectorZtoY = (new THREE.Matrix4()).makeRotationX(Math.PI / 2);
 // For gltf rotation
@@ -161,7 +162,7 @@ export default {
                                     options.overrideMaterials.isMaterial) {
                                     mesh.material = options.overrideMaterials.clone();
                                 } else {
-                                    mesh.material = new THREE.MeshLambertMaterial({ color: 0xffffff });
+                                    mesh.material = new BatchedMaterial(/*{ color: 0xffffff }*/);
                                 }
                             } else if (Capabilities.isLogDepthBufferSupported()
                                         && mesh.material.isRawShaderMaterial
