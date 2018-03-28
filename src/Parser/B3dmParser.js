@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import GLTFLoader from './GLTFLoader';
 import LegacyGLTFLoader from './LegacyGLTFLoader';
 import BatchTableParser from './BatchTableParser';
+import Capabilities from '../Core/System/Capabilities';
+import PrecisionQualifier from '../Renderer/Shader/Chunk/PrecisionQualifier.glsl';
 import utf8Decoder from '../utils/Utf8Decoder';
 
 const matrixChangeUpVectorZtoY = (new THREE.Matrix4()).makeRotationX(Math.PI / 2);
@@ -11,6 +13,36 @@ const matrixChangeUpVectorZtoX = (new THREE.Matrix4()).makeRotationZ(-Math.PI / 
 const glTFLoader = new GLTFLoader();
 
 const legacyGLTFLoader = new LegacyGLTFLoader();
+
+
+const rePosition = new RegExp('gl_Position.*(?![^]*gl_Position)');
+const reMain = new RegExp('[^\\w]*main[^\\w]*(void)?[^\\w]*{');
+export function patchMaterialForLogDepthSupport(material) {
+    // Check if the shader does not already use the log depth buffer
+    if (material.vertexShader.indexOf('USE_LOGDEPTHBUF') !== -1
+        || material.vertexShader.indexOf('logdepthbuf_pars_vertex') !== -1) {
+        return;
+    }
+
+    // Add vertex shader log depth buffer header
+    material.vertexShader = `#include <logdepthbuf_pars_vertex>\n#define EPSILON 1e-6\n${material.vertexShader}`;
+    // Add log depth buffer code snippet after last gl_Position modification
+    let re = rePosition.exec(material.vertexShader);
+    let idx = re[0].length + re.index;
+    material.vertexShader = `${material.vertexShader.slice(0, idx)}\n#include <logdepthbuf_vertex>\n${material.vertexShader.slice(idx)}`;
+
+    // Add fragment shader log depth buffer header
+    material.fragmentShader = `${PrecisionQualifier}\n#include <logdepthbuf_pars_fragment>\n${material.fragmentShader}`;
+    // Add log depth buffer code snippet at the first line of the main function
+    re = reMain.exec(material.fragmentShader);
+    idx = re[0].length + re.index;
+    material.fragmentShader = `${material.fragmentShader.slice(0, idx)}\n#include <logdepthbuf_fragment>\n${material.fragmentShader.slice(idx)}`;
+
+    material.defines = {
+        USE_LOGDEPTHBUF: 1,
+        USE_LOGDEPTHBUF_EXT: 1,
+    };
+}
 
 function filterUnsupportedSemantics(obj) {
     // see GLTFLoader GLTFShader.prototype.update function
@@ -54,6 +86,9 @@ export default {
      * @param {Object} options - additional properties.
      * @param {string=} [options.gltfUpAxis='Y'] - embeded glTF model up axis.
      * @param {string} options.urlBase - the base url of the b3dm file (used to fetch textures for the embeded glTF model).
+     * @param {boolean=} [options.doNotPatchMaterial='false'] - disable patchin material with logarithmic depth buffer support.
+     * @param {float} [options.opacity=1.0] - the b3dm opacity.
+     * @param {boolean|Material=} [options.overrideMaterials='false'] - override b3dm's embeded glTF materials. If overrideMaterials is a three.js material, it will material used to override.
      * @return {Promise} - a promise that resolves with an object containig a THREE.Scene (gltf) and a batch table (batchTable).
      *
      */
@@ -116,6 +151,29 @@ export default {
                     applyOptionalCesiumRTC(buffer.slice(28 + b3dmHeader.FTJSONLength +
                         b3dmHeader.FTBinaryLength + b3dmHeader.BTJSONLength +
                         b3dmHeader.BTBinaryLength), gltf.scene);
+
+                    const init_mesh = function f_init(mesh) {
+                        mesh.frustumCulled = false;
+                        if (mesh.material) {
+                            if (options.overrideMaterials) {
+                                mesh.material.dispose();
+                                if (typeof (options.overrideMaterials) === 'object' &&
+                                    options.overrideMaterials.isMaterial) {
+                                    mesh.material = options.overrideMaterials.clone();
+                                } else {
+                                    mesh.material = new THREE.MeshLambertMaterial({ color: 0xffffff });
+                                }
+                            } else if (Capabilities.isLogDepthBufferSupported()
+                                        && mesh.material.isRawShaderMaterial
+                                        && !options.doNotPatchMaterial) {
+                                patchMaterialForLogDepthSupport(mesh.material);
+                                console.warn('b3dm shader has been patched to add log depth buffer support');
+                            }
+                            mesh.material.transparent = options.opacity < 1.0;
+                            mesh.material.opacity = options.opacity;
+                        }
+                    };
+                    gltf.scene.traverse(init_mesh);
 
                     resolve(gltf);
                 };

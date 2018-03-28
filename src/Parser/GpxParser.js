@@ -8,7 +8,7 @@ import * as THREE from 'three';
 import Line from 'three.meshline';
 import Coordinates from '../Core/Geographic/Coordinates';
 import Capabilities from '../Core/System/Capabilities';
-import { patchMaterialForLogDepthSupport } from '../Provider/3dTilesProvider';
+import { patchMaterialForLogDepthSupport } from './B3dmParser';
 
 function _gpxToWayPointsArray(gpxXML) {
     return gpxXML.getElementsByTagName('wpt');
