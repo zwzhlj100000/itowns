@@ -83,7 +83,7 @@ function executeCommand(command) {
 
     geometry._count++;
     const tile = new TileMesh(geometry, params);
-    tile.layer = layer.id;
+    tile.layer = layer;
     tile.layers.set(command.threejsLayer);
 
     if (parent && parent instanceof TileMesh) {

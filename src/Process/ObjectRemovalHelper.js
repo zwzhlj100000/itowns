@@ -23,12 +23,12 @@ export default {
     /**
      * Remove obj's children belonging to layerId layer.
      * Neither obj nor its children will be disposed!
-     * @param {String} layerId The id of the layer that objects must belong to. Other object are ignored
+     * @param {Layer} layer The layer that objects must belong to. Other object are ignored
      * @param {Object3D} obj The Object3D we want to clean
      * @return {Array} an array of removed Object3D from obj (not including the recursive removals)
      */
-    removeChildren(layerId, obj) {
-        const toRemove = obj.children.filter(c => c.layer === layerId);
+    removeChildren(layer, obj) {
+        const toRemove = obj.children.filter(c => c.layer === layer);
         obj.remove(...toRemove);
         return toRemove;
     },
@@ -36,14 +36,14 @@ export default {
     /**
      * Remove obj's children belonging to layerId layer and cleanup objexts.
      * obj will be disposed but its children **won't**!
-     * @param {String} layerId The id of the layer that objects must belong to. Other object are ignored
+     * @param {Layer} layer The layer that objects must belong to. Other object are ignored
      * @param {Object3D} obj The Object3D we want to clean
      * @return {Array} an array of removed Object3D from obj (not including the recursive removals)
      */
-    removeChildrenAndCleanup(layerId, obj) {
-        const toRemove = obj.children.filter(c => c.layer === layerId);
+    removeChildrenAndCleanup(layer, obj) {
+        const toRemove = obj.children.filter(c => c.layer === layer);
 
-        if (obj.layer === layerId) {
+        if (obj.layer === layer) {
             this.cleanup(obj);
         }
 
@@ -54,16 +54,16 @@ export default {
     /**
      * Recursively remove obj's children belonging to layerId layer.
      * All removed obj will have their geometry/material disposed.
-     * @param {String} layerId The id of the layer that objects must belong to. Other object are ignored
+     * @param {Layer} layer The layer that objects must belong to. Other object are ignored
      * @param {Object3D} obj The Object3D we want to clean
      * @return {Array} an array of removed Object3D from obj (not including the recursive removals)
      */
-    removeChildrenAndCleanupRecursively(layerId, obj) {
-        const toRemove = obj.children.filter(c => c.layer === layerId);
+    removeChildrenAndCleanupRecursively(layer, obj) {
+        const toRemove = obj.children.filter(c => c.layer === layer);
         for (const c of toRemove) {
-            this.removeChildrenAndCleanupRecursively(layerId, c);
+            this.removeChildrenAndCleanupRecursively(layer, c);
         }
-        if (obj.layer === layerId) {
+        if (obj.layer === layer) {
             this.cleanup(obj);
         }
         obj.remove(...toRemove);

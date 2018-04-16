@@ -48,12 +48,12 @@ function screenCoordsToNodeId(view, tileLayer, mouse) {
     return Math.round(unpack);
 }
 
-function findLayerIdInParent(obj) {
+function findLayerInParent(obj) {
     if (obj.layer) {
         return obj.layer;
     }
     if (obj.parent) {
-        return findLayerIdInParent(obj.parent);
+        return findLayerInParent(obj.parent);
     }
 }
 
@@ -68,7 +68,7 @@ export default {
             if (node.id === _id && node instanceof TileMesh) {
                 results.push({
                     object: node,
-                    layer: layer.id,
+                    layer,
                 });
             }
         };
@@ -115,7 +115,7 @@ export default {
                     result = {
                         object: o,
                         index,
-                        layer: layer.id,
+                        layer,
                     };
                 }
             }
@@ -138,7 +138,7 @@ export default {
             view.camera.camera3D);
         const intersects = raycaster.intersectObject(object, true);
         for (const inter of intersects) {
-            inter.layer = findLayerIdInParent(inter.object);
+            inter.layer = findLayerInParent(inter.object);
             target.push(inter);
         }
 
