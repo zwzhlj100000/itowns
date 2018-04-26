@@ -7,10 +7,9 @@
 import Extent from '../Core/Geographic/Extent';
 import URLBuilder from './URLBuilder';
 import Fetcher from './Fetcher';
+import Cache from '../Core/Scheduler/Cache';
 import GeoJsonParser from '../Parser/GeoJsonParser';
 import Feature2Mesh from '../Renderer/ThreeExtended/Feature2Mesh';
-
-const cache = new Map();
 
 function preprocessDataLayer(layer) {
     if (!layer.typeName) {
@@ -63,8 +62,8 @@ function getFeatures(crs, tile, layer) {
 
     const urld = URLBuilder.bbox(tile.extent.as(layer.crs), layer);
 
-    if (cache.has(urld)) {
-        return Promise.resolve({ feature: cache.get(urld) });
+    if (Cache.has(urld)) {
+        return Promise.resolve({ feature: Cache.get(urld) });
     }
 
     layer.convert = layer.convert ? layer.convert : Feature2Mesh.convert({});
