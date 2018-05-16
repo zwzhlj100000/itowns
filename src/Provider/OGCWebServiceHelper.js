@@ -31,7 +31,7 @@ export default {
             return texture;
         });
 
-        Cache.set(url, promise, Cache.POLICIES.PENDING);
+        Cache.set(url, promise);
 
         return promise;
     },
@@ -40,7 +40,7 @@ export default {
             return Promise.resolve(Cache.get(url));
         }
 
-        const promiseXBil = Fetcher.arrayBuffer(url, networkOptions).then(buffer => XbilParser.parse(buffer, { url })).then((result) => {
+        const promise = Fetcher.arrayBuffer(url, networkOptions).then(buffer => XbilParser.parse(buffer, { url })).then((result) => {
             // TODO  RGBA is needed for navigator with no support in texture float
             // In RGBA elevation texture LinearFilter give some errors with nodata value.
             // need to rewrite sample function in shader
@@ -57,9 +57,9 @@ export default {
             return texture;
         });
 
-        Cache.set(url, promiseXBil, Cache.POLICIES.PENDING);
+        Cache.set(url, promise);
 
-        return promiseXBil;
+        return promise;
     },
     computeTileMatrixSetCoordinates(tile, tileMatrixSet) {
         // Are WMTS coordinates ready?

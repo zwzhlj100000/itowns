@@ -32,15 +32,12 @@ const Cache = {
      * @property INFINITE - The entry is never flushed, except when the
      * <code>all</code> flag is set to <code>true</code> when calling {@link
      * Cache.flush}.
-     * @property PENDING - Shortcut for pending resources, being fetched. Time
-     * is 30 seconds.
      * @property TEXTURE - Shortcut for texture resources. Time is 15 minutes.
      * @property ELEVATION - Shortcut for elevation resources. Time is 15
      * minutes.
      */
     POLICIES: {
         INFINITE: Infinity,
-        PENDING: 30000,
         TEXTURE: 900000,
         ELEVATION: 900000,
     },
