@@ -171,7 +171,7 @@ function geometryToLine(geometry, properties, options, multiGeomAttributes) {
     if (multiGeomAttributes) {
         const indices = [];
         // Multi line case
-        for (let i = 0; i < geometry.length; i++) {
+        for (let i = 0; i < geometry.elements.length; i++) {
             const start = multiGeomAttributes.elements[i].offset;
             const end = multiGeomAttributes.elements[i].offset + multiGeomAttributes.elements[i].count;
             for (let j = start; j < end; j++) {
@@ -251,15 +251,15 @@ function geometryToExtrudedPolygon(geometry, properties, options, multiGeomAttri
         // Multi polygon case
         const isClockWise = THREE.ShapeUtils.isClockWise(
             vertices.slice(
-                multiGeomAttributes.elements[0].offset + geometry[0].contour.offset,
+                multiGeomAttributes.elements[0].offset + geometry.elements[0].contour.offset,
                 multiGeomAttributes.elements[0].offset +
-                geometry[0].contour.offset +
-                geometry[0].contour.count).map(c => c.xyz()));
+                geometry.elements[0].contour.offset +
+                geometry.elements[0].contour.count).map(c => c.xyz()));
 
         for (let i = 0; i < geometry.length; i++) {
-            const holesOffsets = geometry[i].holes.map(h => h.offset);
+            const holesOffsets = geometry.elements[i].holes.map(h => h.offset);
             // triangulate the top face
-            const start = vertices.length + multiGeomAttributes.elements[i].offset + geometry[i].contour.offset;
+            const start = vertices.length + multiGeomAttributes.elements[i].offset + geometry.elements[i].contour.offset;
             const end = vertices.length + multiGeomAttributes.elements[i].offset + multiGeomAttributes.elements[i].count;
             const triangles = Earcut(geom.attributes.position.array.slice(start * 3, end * 3),
                 holesOffsets,
@@ -271,18 +271,18 @@ function geometryToExtrudedPolygon(geometry, properties, options, multiGeomAttri
                 indices,
                 vertices.length,
                 {
-                    count: geometry[i].contour.count,
-                    offset: multiGeomAttributes.elements[i].offset + geometry[i].contour.offset,
+                    count: geometry.elements[i].contour.count,
+                    offset: multiGeomAttributes.elements[i].offset + geometry.elements[i].contour.offset,
                 },
                 isClockWise);
             if (holesOffsets.length > 0) {
-                for (let j = 0; j < geometry[i].holes.length; j++) {
+                for (let j = 0; j < geometry.elements[i].holes.length; j++) {
                     addExtrudedPolygonSideFaces(
                         indices,
                         vertices.length,
                         {
-                            count: geometry[i].holes[j].count,
-                            offset: multiGeomAttributes.elements[i].offset + geometry[i].holes[j].offset,
+                            count: geometry.elements[i].holes[j].count,
+                            offset: multiGeomAttributes.elements[i].offset + geometry.elements[i].holes[j].offset,
                         },
                         isClockWise);
                 }
@@ -346,13 +346,13 @@ function geometryToMesh(geometry, properties, options) {
             elements: [],
         };
         let offset = 0;
-        for (let i = 0; i < geometry.length; i++) {
-            vertices = vertices.concat(geometry[i].vertices);
+        for (let i = 0; i < geometry.elements.length; i++) {
+            vertices = vertices.concat(geometry.elements[i].vertices);
             multiGeometries.elements.push({
                 offset,
-                count: geometry[i].vertices.length,
+                count: geometry.elements[i].vertices.length,
             });
-            offset += geometry[i].vertices.length;
+            offset += geometry.elements[i].vertices.length;
         }
         multiGeometries.vertices = vertices;
     }

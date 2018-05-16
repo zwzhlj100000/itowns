@@ -104,15 +104,21 @@ const GeometryToCoordinates = {
         return { type: 'linestring', vertices: coordinates, extent };
     },
     multiPoint(crsIn, crsOut, coordsIn, filteringExtent, options) {
-        const points = [];
-        points.type = 'multipoint';
+        if (coordsIn.length == 1) {
+            return this.point(crsIn, crsOut, coordsIn[0], filteringExtent, options);
+        }
+
+        const points = {
+            type: 'multipoint',
+            elements: [],
+        };
         for (const pt of coordsIn) {
             const l = this.point(crsIn, crsOut, pt, filteringExtent, options);
             if (!l) {
                 return;
             }
             filteringExtent = undefined;
-            points.push(l);
+            points.elements.push(l);
             if (options.buildExtent) {
                 points.extent = points.extent || l.extent;
                 points.extent.union(l.extent);
@@ -122,8 +128,14 @@ const GeometryToCoordinates = {
     },
 
     multiLineString(crsIn, crsOut, coordsIn, filteringExtent, options) {
-        const lines = [];
-        lines.type = 'multilinestring';
+        if (coordsIn.length == 1) {
+            return this.lineString(crsIn, crsOut, coordsIn[0], filteringExtent, options);
+        }
+
+        const lines = {
+            type: 'multilinestring',
+            elements: [],
+        };
         for (const line of coordsIn) {
             const l = this.lineString(crsIn, crsOut, line, filteringExtent, options);
             if (!l) {
@@ -131,7 +143,7 @@ const GeometryToCoordinates = {
             }
             // only test the first line
             filteringExtent = undefined;
-            lines.push(l);
+            lines.elements.push(l);
             if (options.buildExtent) {
                 lines.extent = lines.extent || l.extent;
                 lines.extent.union(l.extent);
@@ -140,8 +152,14 @@ const GeometryToCoordinates = {
         return lines;
     },
     multiPolygon(crsIn, crsOut, coordsIn, filteringExtent, options) {
-        const polygons = [];
-        polygons.type = 'multipolygon';
+        // if (coordsIn.length == 1) {
+            // return this.polygon(crsIn, crsOut, coordsIn[0], filteringExtent, options);
+        // }
+
+        const polygons = {
+            type: 'multipolygon',
+            elements: [],
+        };
         for (const polygon of coordsIn) {
             const p = this.polygon(crsIn, crsOut, polygon, filteringExtent, options);
             if (!p) {
@@ -149,12 +167,13 @@ const GeometryToCoordinates = {
             }
             // only test the first poly
             filteringExtent = undefined;
-            polygons.push(p);
+            polygons.elements.push(p);
             if (options.buildExtent) {
                 polygons.extent = polygons.extent || p.extent;
                 polygons.extent.union(p.extent);
             }
         }
+
         return polygons;
     },
 };
