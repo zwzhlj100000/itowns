@@ -126,78 +126,28 @@ const GeometryToCoordinates = {
             ],
         };
     },
-    multiPoint(crsIn, crsOut, coordsIn, filteringExtent, options) {
+    multi(type, crsIn, crsOut, coordsIn, filteringExtent, options) {
         if (coordsIn.length == 1) {
-            return this.point(crsIn, crsOut, coordsIn[0], filteringExtent, options);
+            return this[type](crsIn, crsOut, coordsIn[0], filteringExtent, options);
         }
 
-        const points = {
-            type: 'multipoint',
+        const multis = {
+            type: `multi${type}`,
             elements: [],
         };
-        for (const pt of coordsIn) {
-            const l = this.point(crsIn, crsOut, pt, filteringExtent, options, true);
-            if (!l) {
+        for (const mu of coordsIn) {
+            const m = this[type](crsIn, crsOut, mu, filteringExtent, options, true);
+            if (!m) {
                 return;
             }
             filteringExtent = undefined;
-            points.elements.push(l);
+            multis.elements.push(m);
             if (options.buildExtent) {
-                points.extent = points.extent || l.extent;
-                points.extent.union(l.extent);
+                multis.extent = multis.extent || m.extent;
+                multis.extent.union(m.extent);
             }
         }
-        return points;
-    },
-
-    multiLineString(crsIn, crsOut, coordsIn, filteringExtent, options) {
-        if (coordsIn.length == 1) {
-            return this.lineString(crsIn, crsOut, coordsIn[0], filteringExtent, options);
-        }
-
-        const lines = {
-            type: 'multilinestring',
-            elements: [],
-        };
-        for (const line of coordsIn) {
-            const l = this.lineString(crsIn, crsOut, line, filteringExtent, options, true);
-            if (!l) {
-                return;
-            }
-            // only test the first line
-            filteringExtent = undefined;
-            lines.elements.push(l);
-            if (options.buildExtent) {
-                lines.extent = lines.extent || l.extent;
-                lines.extent.union(l.extent);
-            }
-        }
-        return lines;
-    },
-    multiPolygon(crsIn, crsOut, coordsIn, filteringExtent, options) {
-        if (coordsIn.length == 1) {
-            return this.polygon(crsIn, crsOut, coordsIn[0], filteringExtent, options);
-        }
-
-        const polygons = {
-            type: 'multipolygon',
-            elements: [],
-        };
-        for (const polygon of coordsIn) {
-            const p = this.polygon(crsIn, crsOut, polygon, filteringExtent, options, true);
-            if (!p) {
-                return;
-            }
-            // only test the first poly
-            filteringExtent = undefined;
-            polygons.elements.push(p);
-            if (options.buildExtent) {
-                polygons.extent = polygons.extent || p.extent;
-                polygons.extent.union(p.extent);
-            }
-        }
-
-        return polygons;
+        return multis;
     },
 };
 
@@ -209,15 +159,15 @@ function readGeometry(crsIn, crsOut, json, filteringExtent, options) {
         case 'point':
             return GeometryToCoordinates.point(crsIn, crsOut, [json.coordinates], filteringExtent, options);
         case 'multipoint':
-            return GeometryToCoordinates.multiPoint(crsIn, crsOut, json.coordinates, filteringExtent, options);
+            return GeometryToCoordinates.multi('point', crsIn, crsOut, json.coordinates, filteringExtent, options);
         case 'linestring':
             return GeometryToCoordinates.lineString(crsIn, crsOut, json.coordinates, filteringExtent, options);
         case 'multilinestring':
-            return GeometryToCoordinates.multiLineString(crsIn, crsOut, json.coordinates, filteringExtent, options);
+            return GeometryToCoordinates.multi('linestring', crsIn, crsOut, json.coordinates, filteringExtent, options);
         case 'polygon':
             return GeometryToCoordinates.polygon(crsIn, crsOut, json.coordinates, filteringExtent, options);
         case 'multipolygon':
-            return GeometryToCoordinates.multiPolygon(crsIn, crsOut, json.coordinates, filteringExtent, options);
+            return GeometryToCoordinates.multi('polygon', crsIn, crsOut, json.coordinates, filteringExtent, options);
         case 'geometrycollection':
         default:
             throw new Error(`Unhandled geometry type ${json.type}`);
