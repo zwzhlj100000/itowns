@@ -141,8 +141,8 @@ function prepareBufferGeometry(vert, color, altitude, extrude) {
 }
 
 
-function geometryToPoint(geometry, properties, options, multiGeomAttributes) {
-    const vertices = multiGeomAttributes ? multiGeomAttributes.vertices : geometry.vertices;
+function geometryToPoint(elements, properties, options, multiGeomAttributes) {
+    const vertices = multiGeomAttributes ? multiGeomAttributes.vertices : elements[0].vertices;
 
     // get altitude / color from properties
     const altitude = getAltitude(options, properties, vertices);
@@ -156,8 +156,8 @@ function geometryToPoint(geometry, properties, options, multiGeomAttributes) {
     return new THREE.Points(geom);
 }
 
-function geometryToLine(geometry, properties, options, multiGeomAttributes) {
-    const vertices = multiGeomAttributes ? multiGeomAttributes.vertices : geometry.vertices;
+function geometryToLine(elements, properties, options, multiGeomAttributes) {
+    const vertices = multiGeomAttributes ? multiGeomAttributes.vertices : elements[0].vertices;
 
     // get altitude / color from properties
     const altitude = getAltitude(options, properties, vertices);
@@ -171,7 +171,7 @@ function geometryToLine(geometry, properties, options, multiGeomAttributes) {
     if (multiGeomAttributes) {
         const indices = [];
         // Multi line case
-        for (let i = 0; i < geometry.elements.length; i++) {
+        for (let i = 0; i < elements.length; i++) {
             const start = multiGeomAttributes.elements[i].offset;
             const end = multiGeomAttributes.elements[i].offset + multiGeomAttributes.elements[i].count;
             for (let j = start; j < end; j++) {
@@ -186,8 +186,8 @@ function geometryToLine(geometry, properties, options, multiGeomAttributes) {
     }
 }
 
-function geometryToPolygon(geometry, properties, options, multiGeomAttributes) {
-    const vertices = multiGeomAttributes ? multiGeomAttributes.vertices : geometry.vertices;
+function geometryToPolygon(elements, properties, options, multiGeomAttributes) {
+    const vertices = multiGeomAttributes ? multiGeomAttributes.vertices : elements[0].vertices;
 
     // get altitude / color from properties
     const altitude = getAltitude(options, properties, vertices);
@@ -202,9 +202,9 @@ function geometryToPolygon(geometry, properties, options, multiGeomAttributes) {
     // Build indices
     if (multiGeomAttributes) {
         // Multi polygon case
-        for (let i = 0; i < geometry.length; i++) {
-            const holesOffsets = geometry[i].holes.map(h => h.offset);
-            const start = multiGeomAttributes.elements[i].offset + geometry[i].contour.offset;
+        for (let i = 0; i < elements.length; i++) {
+            const holesOffsets = elements[i].holes.map(h => h.offset);
+            const start = multiGeomAttributes.elements[i].offset + elements[i].contour.offset;
             const end = multiGeomAttributes.elements[i].offset + multiGeomAttributes.elements[i].count;
             const triangles = Earcut(geom.attributes.position.array.slice(start * 3, end * 3),
                 holesOffsets,
@@ -215,7 +215,7 @@ function geometryToPolygon(geometry, properties, options, multiGeomAttributes) {
         }
     } else {
         // Single polygon case
-        const holesOffsets = geometry.holes.map(h => h.offset);
+        const holesOffsets = elements[0].holes.map(h => h.offset);
         const triangles = Earcut(geom.attributes.position.array, holesOffsets, 3);
         for (const indice of triangles) {
             indices.push(indice);
@@ -227,8 +227,8 @@ function geometryToPolygon(geometry, properties, options, multiGeomAttributes) {
 }
 
 
-function geometryToExtrudedPolygon(geometry, properties, options, multiGeomAttributes) {
-    const vertices = multiGeomAttributes ? multiGeomAttributes.vertices : geometry.vertices;
+function geometryToExtrudedPolygon(elements, properties, options, multiGeomAttributes) {
+    const vertices = multiGeomAttributes ? multiGeomAttributes.vertices : elements[0].vertices;
 
     // get altitude / color from properties
     const altitude = getAltitude(options, properties, vertices);
@@ -251,15 +251,15 @@ function geometryToExtrudedPolygon(geometry, properties, options, multiGeomAttri
         // Multi polygon case
         const isClockWise = THREE.ShapeUtils.isClockWise(
             vertices.slice(
-                multiGeomAttributes.elements[0].offset + geometry.elements[0].contour.offset,
+                multiGeomAttributes.elements[0].offset + elements[0].contour.offset,
                 multiGeomAttributes.elements[0].offset +
-                geometry.elements[0].contour.offset +
-                geometry.elements[0].contour.count).map(c => c.xyz()));
+                elements[0].contour.offset +
+                elements[0].contour.count).map(c => c.xyz()));
 
-        for (let i = 0; i < geometry.length; i++) {
-            const holesOffsets = geometry.elements[i].holes.map(h => h.offset);
+        for (let i = 0; i < elements.length; i++) {
+            const holesOffsets = elements[i].holes.map(h => h.offset);
             // triangulate the top face
-            const start = vertices.length + multiGeomAttributes.elements[i].offset + geometry.elements[i].contour.offset;
+            const start = vertices.length + multiGeomAttributes.elements[i].offset + elements[i].contour.offset;
             const end = vertices.length + multiGeomAttributes.elements[i].offset + multiGeomAttributes.elements[i].count;
             const triangles = Earcut(geom.attributes.position.array.slice(start * 3, end * 3),
                 holesOffsets,
@@ -271,18 +271,18 @@ function geometryToExtrudedPolygon(geometry, properties, options, multiGeomAttri
                 indices,
                 vertices.length,
                 {
-                    count: geometry.elements[i].contour.count,
-                    offset: multiGeomAttributes.elements[i].offset + geometry.elements[i].contour.offset,
+                    count: elements[i].contour.count,
+                    offset: multiGeomAttributes.elements[i].offset + elements[i].contour.offset,
                 },
                 isClockWise);
             if (holesOffsets.length > 0) {
-                for (let j = 0; j < geometry.elements[i].holes.length; j++) {
+                for (let j = 0; j < elements[i].holes.length; j++) {
                     addExtrudedPolygonSideFaces(
                         indices,
                         vertices.length,
                         {
-                            count: geometry.elements[i].holes[j].count,
-                            offset: multiGeomAttributes.elements[i].offset + geometry.elements[i].holes[j].offset,
+                            count: elements[i].holes[j].count,
+                            offset: multiGeomAttributes.elements[i].offset + elements[i].holes[j].offset,
                         },
                         isClockWise);
                 }
@@ -291,11 +291,11 @@ function geometryToExtrudedPolygon(geometry, properties, options, multiGeomAttri
     } else {
         // Single polygon case
         const isClockWise = THREE.ShapeUtils.isClockWise(
-            vertices.slice(geometry.contour.offset,
-                geometry.contour.offset +
-                geometry.contour.count).map(c => c.xyz()));
+            vertices.slice(elements[0].contour.offset,
+                elements[0].contour.offset +
+                elements[0].contour.count).map(c => c.xyz()));
 
-        const holesOffsets = geometry.holes.map(h => h.offset);
+        const holesOffsets = elements[0].holes.map(h => h.offset);
         const triangles = Earcut(geom.attributes.position.array.slice(
             vertices.length * 3), holesOffsets, 3);
         for (const indice of triangles) {
@@ -304,14 +304,14 @@ function geometryToExtrudedPolygon(geometry, properties, options, multiGeomAttri
         addExtrudedPolygonSideFaces(
             indices,
             vertices.length,
-            geometry.contour,
+            elements[0].contour,
             isClockWise);
         if (holesOffsets.length > 0) {
-            for (let j = 0; j < geometry.holes.length; j++) {
+            for (let j = 0; j < elements[0].holes.length; j++) {
                 addExtrudedPolygonSideFaces(
                     indices,
                     vertices.length,
-                    geometry.holes[j],
+                    elements[0].holes[j],
                     isClockWise);
             }
         }
@@ -362,26 +362,26 @@ function geometryToMesh(geometry, properties, options) {
     switch (geometry.type) {
         case 'point':
         case 'multipoint': {
-            mesh = geometryToPoint(geometry, properties, options, multiGeometries);
+            mesh = geometryToPoint(geometry.elements, properties, options, multiGeometries);
             break;
         }
         case 'linestring':
         case 'multilinestring': {
-            mesh = geometryToLine(geometry, properties, options, multiGeometries);
+            mesh = geometryToLine(geometry.elements, properties, options, multiGeometries);
             break;
         }
         case 'polygon':
         case 'multipolygon': {
             if (options.extrude) {
                 mesh = geometryToExtrudedPolygon(
-                    geometry,
+                    geometry.elements,
                     properties,
                     options,
                     multiGeometries);
             }
             else {
                 mesh = geometryToPolygon(
-                    geometry,
+                    geometry.elements,
                     properties,
                     options,
                     multiGeometries);

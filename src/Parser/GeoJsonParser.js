@@ -55,15 +55,25 @@ function readCoordinates(crsIn, crsOut, coordinates, extent, target) {
 // - extent is optional, it's coordinates's extent
 // Multi-* geometry types are merged in one.
 const GeometryToCoordinates = {
-    point(crsIn, crsOut, coordsIn, filteringExtent, options) {
+    point(crsIn, crsOut, coordsIn, filteringExtent, options, asElement) {
         const extent = options.buildExtent ? new Extent(crsOut, Infinity, -Infinity, Infinity, -Infinity) : undefined;
         let coordinates = readCoordinates(crsIn, crsOut, coordsIn, extent);
         if (filteringExtent) {
             coordinates = coordinates.filter(c => filteringExtent.isPointInside(c));
         }
-        return { type: 'point', vertices: coordinates, extent };
+
+        if (asElement) {
+            return { vertices: coordinates, extent };
+        }
+
+        return {
+            type: 'point',
+            elements: [
+                { vertices: coordinates, extent },
+            ],
+        };
     },
-    polygon(crsIn, crsOut, coordsIn, filteringExtent, options) {
+    polygon(crsIn, crsOut, coordsIn, filteringExtent, options, asElement) {
         const extent = options.buildExtent ? new Extent(crsOut, Infinity, -Infinity, Infinity, -Infinity) : undefined;
         // read contour first
         const coordinates = readCoordinates(crsIn, crsOut, coordsIn[0], extent);
@@ -87,21 +97,34 @@ const GeometryToCoordinates = {
             offset += count;
         }
 
+        if (asElement) {
+            return { vertices: coordinates, contour, holes, extent };
+        }
+
         return {
             type: 'polygon',
-            vertices: coordinates,
-            contour,
-            holes,
-            extent,
+            elements: [
+                { vertices: coordinates, contour, holes, extent },
+            ],
         };
     },
-    lineString(crsIn, crsOut, coordsIn, filteringExtent, options) {
+    lineString(crsIn, crsOut, coordsIn, filteringExtent, options, asElement) {
         const extent = options.buildExtent ? new Extent(crsOut, Infinity, -Infinity, Infinity, -Infinity) : undefined;
         const coordinates = readCoordinates(crsIn, crsOut, coordsIn, extent);
         if (filteringExtent && !filteringExtent.isPointInside(coordinates[0])) {
             return;
         }
-        return { type: 'linestring', vertices: coordinates, extent };
+
+        if (asElement) {
+            return { vertices: coordinates, extent };
+        }
+
+        return {
+            type: 'linestring',
+            elements: [
+                { vertices: coordinates, extent },
+            ],
+        };
     },
     multiPoint(crsIn, crsOut, coordsIn, filteringExtent, options) {
         if (coordsIn.length == 1) {
@@ -113,7 +136,7 @@ const GeometryToCoordinates = {
             elements: [],
         };
         for (const pt of coordsIn) {
-            const l = this.point(crsIn, crsOut, pt, filteringExtent, options);
+            const l = this.point(crsIn, crsOut, pt, filteringExtent, options, true);
             if (!l) {
                 return;
             }
@@ -137,7 +160,7 @@ const GeometryToCoordinates = {
             elements: [],
         };
         for (const line of coordsIn) {
-            const l = this.lineString(crsIn, crsOut, line, filteringExtent, options);
+            const l = this.lineString(crsIn, crsOut, line, filteringExtent, options, true);
             if (!l) {
                 return;
             }
@@ -152,16 +175,16 @@ const GeometryToCoordinates = {
         return lines;
     },
     multiPolygon(crsIn, crsOut, coordsIn, filteringExtent, options) {
-        // if (coordsIn.length == 1) {
-            // return this.polygon(crsIn, crsOut, coordsIn[0], filteringExtent, options);
-        // }
+        if (coordsIn.length == 1) {
+            return this.polygon(crsIn, crsOut, coordsIn[0], filteringExtent, options);
+        }
 
         const polygons = {
             type: 'multipolygon',
             elements: [],
         };
         for (const polygon of coordsIn) {
-            const p = this.polygon(crsIn, crsOut, polygon, filteringExtent, options);
+            const p = this.polygon(crsIn, crsOut, polygon, filteringExtent, options, true);
             if (!p) {
                 return;
             }
