@@ -4,32 +4,38 @@ precision highp int;
 #include <logdepthbuf_pars_vertex>
 #define EPSILON 1e-6
 
-uniform float size;
-uniform float scale;
+attribute vec3 position;
 uniform mat4 projectionMatrix;
 uniform mat4 modelViewMatrix;
-uniform vec2 resolution;
-uniform bool pickingMode;
 
-attribute vec4 unique_id;
+uniform float size;
+uniform vec2 resolution;
+
+uniform bool pickingMode;
+uniform bool useCustomColor;
+uniform float opacity;
+uniform vec3 customColor;
 attribute vec3 color;
-attribute vec3 position;
+attribute vec4 unique_id;
 
 varying vec4 vColor;
 
 void main() {
     if (pickingMode) {
         vColor = unique_id;
+    } else if (useCustomColor) {
+        vColor = vec4(mix(color, customColor, 0.5), opacity);
     } else {
-        vColor = vec4(color, 1.0);
+        vColor = vec4(color, opacity);
     }
-    vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
-    mat4 projModelViewMatrix = projectionMatrix * modelViewMatrix;
-    gl_Position = projModelViewMatrix* vec4( position, 1.0);
 
-    if (size > 0.01) {
+    vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+    gl_Position = projectionMatrix * mvPosition;
+
+    if (size > 0.) {
         gl_PointSize = size;
     } else {
+        // automatic sizing
         float pointSize = 1.0;
         float slope = tan(1.0 / 2.0);
         float projFactor =  -0.5 * resolution.y / (slope * mvPosition.z);
