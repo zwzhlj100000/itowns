@@ -1,4 +1,4 @@
-import { Color, Uniform, Vector2, NoBlending, NormalBlending, RawShaderMaterial } from 'three';
+import { Vector4, Uniform, Vector2, NoBlending, NormalBlending, RawShaderMaterial } from 'three';
 import PointsVS from './Shader/PointsVS.glsl';
 import PointsFS from './Shader/PointsFS.glsl';
 import Capabilities from '../Core/System/Capabilities';
@@ -13,8 +13,7 @@ class PointsMaterial extends RawShaderMaterial {
         this.uniforms.resolution = new Uniform(new Vector2(window.innerWidth, window.innerHeight));
         this.uniforms.pickingMode = new Uniform(false);
         this.uniforms.opacity = new Uniform(1.0);
-        this.uniforms.useCustomColor = new Uniform(false);
-        this.uniforms.customColor = new Uniform(new Color());
+        this.uniforms.rgba = new Uniform(new Vector4(0, 0, 0, 0));
 
         if (Capabilities.isLogDepthBufferSupported()) {
             this.defines = {
