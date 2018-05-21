@@ -13,7 +13,7 @@ uniform vec2 resolution;
 
 uniform bool pickingMode;
 uniform float opacity;
-uniform vec4 rgba;
+uniform vec4 overlayColor;
 attribute vec3 color;
 attribute vec4 unique_id;
 
@@ -23,7 +23,7 @@ void main() {
     if (pickingMode) {
         vColor = unique_id;
     } else {
-        vColor = vec4(mix(color, rgba.rgb, rgba.a), opacity);
+        vColor = vec4(mix(color, overlayColor.rgb, overlayColor.a), opacity);
     }
 
     vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
