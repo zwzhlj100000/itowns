@@ -237,7 +237,7 @@ export default {
         const url = `${node.baseurl}/r${node.name}.${layer.extension}?isleaf=${command.isLeaf ? 1 : 0}`;
 
         return Fetcher.arrayBuffer(url, layer.fetchOptions).then(layer.parse).then((geometry) => {
-            const points = new THREE.Points(geometry, layer.material.clone());
+            const points = new THREE.Points(geometry, layer.material);
             addPickingAttribute(points);
             points.frustumCulled = false;
             points.matrixAutoUpdate = false;
@@ -252,11 +252,6 @@ export default {
             points.tightbbox.max.y *= layer.metadata.scale;
             points.tightbbox.max.z *= layer.metadata.scale;
             points.tightbbox.translate(node.bbox.min);
-            points.material.transparent = layer.opacity < 1.0;
-            points.material.opacity = layer.opacity;
-            if (points.material.uniforms.opacity) {
-                points.material.uniforms.opacity.value = layer.opacity;
-            }
             points.updateMatrix();
             points.layers.set(layer.threejsLayer);
             points.layer = layer.id;
