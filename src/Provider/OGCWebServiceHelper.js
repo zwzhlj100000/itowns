@@ -17,49 +17,31 @@ const tileCoord = new Extent('WMTS:WGS84G', 0, 0, 0);
 
 export default {
     getColorTextureByUrl(url, networkOptions) {
-        if (Cache.has(url)) {
-            return Promise.resolve(Cache.get(url));
-        }
-
-        const promise = Fetcher.texture(url, networkOptions).then((texture) => {
-            texture.generateMipmaps = false;
-            texture.magFilter = THREE.LinearFilter;
-            texture.minFilter = THREE.LinearFilter;
-            texture.anisotropy = 16;
-
-            Cache.set(url, texture, Cache.POLICIES.TEXTURE);
-            return texture;
-        });
-
-        Cache.set(url, promise);
-
-        return promise;
+        return Cache.get(url) || Cache.set(url, Fetcher.texture(url, networkOptions)
+            .then((texture) => {
+                texture.generateMipmaps = false;
+                texture.magFilter = THREE.LinearFilter;
+                texture.minFilter = THREE.LinearFilter;
+                texture.anisotropy = 16;
+                return texture;
+            }), Cache.POLICIES.TEXTURE);
     },
     getXBilTextureByUrl(url, networkOptions) {
-        if (Cache.has(url)) {
-            return Promise.resolve(Cache.get(url));
-        }
+        return Cache.get(url) || Cache.set(url, Fetcher.arrayBuffer(url, networkOptions)
+            .then(buffer => XbilParser.parse(buffer, { url }))
+            .then((result) => {
+                // TODO  RGBA is needed for navigator with no support in texture float
+                // In RGBA elevation texture LinearFilter give some errors with nodata value.
+                // need to rewrite sample function in shader
 
-        const promise = Fetcher.arrayBuffer(url, networkOptions).then(buffer => XbilParser.parse(buffer, { url })).then((result) => {
-            // TODO  RGBA is needed for navigator with no support in texture float
-            // In RGBA elevation texture LinearFilter give some errors with nodata value.
-            // need to rewrite sample function in shader
-
-            const texture = getTextureFloat(result.floatArray);
-            texture.generateMipmaps = false;
-            texture.magFilter = THREE.LinearFilter;
-            texture.minFilter = THREE.LinearFilter;
-            texture.min = result.min;
-            texture.max = result.max;
-
-            Cache.set(url, texture, Cache.POLICIES.ELEVATION);
-
-            return texture;
-        });
-
-        Cache.set(url, promise);
-
-        return promise;
+                const texture = getTextureFloat(result.floatArray);
+                texture.generateMipmaps = false;
+                texture.magFilter = THREE.LinearFilter;
+                texture.minFilter = THREE.LinearFilter;
+                texture.min = result.min;
+                texture.max = result.max;
+                return texture;
+            }), Cache.POLICIES.ELEVATION);
     },
     computeTileMatrixSetCoordinates(tile, tileMatrixSet) {
         // Are WMTS coordinates ready?

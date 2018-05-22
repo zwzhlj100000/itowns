@@ -87,6 +87,8 @@ const Cache = {
      * @param {string} key
      * @param {Object} value
      * @param {number} [lifetime]
+     *
+     * @return {Object} the added value
      */
     set: (key, value, lifetime = Infinity) => {
         const entry = {
@@ -95,6 +97,8 @@ const Cache = {
             lifetime,
         };
         data.set(key, entry);
+
+        return value;
     },
 
     /**
