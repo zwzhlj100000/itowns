@@ -8,8 +8,9 @@ class PointsMaterial extends RawShaderMaterial {
         super();
         this.vertexShader = PointsVS;
         this.fragmentShader = PointsFS;
+        this.size = size;
 
-        this.uniforms.size = new Uniform(size);
+        this.uniforms.size = new Uniform(this.size);
         this.uniforms.resolution = new Uniform(new Vector2(window.innerWidth, window.innerHeight));
         this.uniforms.pickingMode = new Uniform(false);
         this.uniforms.opacity = new Uniform(1.0);
@@ -32,6 +33,11 @@ class PointsMaterial extends RawShaderMaterial {
         // we don't want pixels to blend over already drawn pixels
         this.blending = v ? NoBlending : NormalBlending;
         this.uniforms.pickingMode.value = v;
+    }
+
+    updateUniforms() {
+        this.uniforms.size.value = this.size;
+        this.uniforms.opacity.value = this.opacity;
     }
 }
 
