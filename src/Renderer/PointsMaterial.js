@@ -35,7 +35,7 @@ class PointsMaterial extends RawShaderMaterial {
         this.uniforms.pickingMode.value = v;
     }
 
-    updateUniforms() {
+    refreshUniforms(/* renderer, scene, camera, geometry, material, group */) {
         this.uniforms.size.value = this.size;
         this.uniforms.opacity.value = this.opacity;
     }
