@@ -55,25 +55,18 @@ function readCoordinates(crsIn, crsOut, coordinates, extent, target) {
 // - extent is optional, it's coordinates's extent
 // Multi-* geometry types are merged in one.
 const GeometryToCoordinates = {
-    point(crsIn, crsOut, coordsIn, filteringExtent, options, asElement) {
+    point(crsIn, crsOut, coordsIn, filteringExtent, options) {
         const extent = options.buildExtent ? new Extent(crsOut, Infinity, -Infinity, Infinity, -Infinity) : undefined;
         let coordinates = readCoordinates(crsIn, crsOut, coordsIn, extent);
         if (filteringExtent) {
             coordinates = coordinates.filter(c => filteringExtent.isPointInside(c));
         }
 
-        if (asElement) {
-            return { vertices: coordinates, extent };
-        }
-
-        return {
-            type: 'point',
-            elements: [
-                { vertices: coordinates, extent },
-            ],
-        };
+        return [
+            { vertices: coordinates, extent },
+        ];
     },
-    polygon(crsIn, crsOut, coordsIn, filteringExtent, options, asElement) {
+    polygon(crsIn, crsOut, coordsIn, filteringExtent, options) {
         const extent = options.buildExtent ? new Extent(crsOut, Infinity, -Infinity, Infinity, -Infinity) : undefined;
         // read contour first
         const coordinates = readCoordinates(crsIn, crsOut, coordsIn[0], extent);
@@ -97,55 +90,34 @@ const GeometryToCoordinates = {
             offset += count;
         }
 
-        if (asElement) {
-            return { vertices: coordinates, contour, holes, extent };
-        }
-
-        return {
-            type: 'polygon',
-            elements: [
-                { vertices: coordinates, contour, holes, extent },
-            ],
-        };
+        return [
+            { vertices: coordinates, contour, holes, extent },
+        ];
     },
-    lineString(crsIn, crsOut, coordsIn, filteringExtent, options, asElement) {
+    lineString(crsIn, crsOut, coordsIn, filteringExtent, options) {
         const extent = options.buildExtent ? new Extent(crsOut, Infinity, -Infinity, Infinity, -Infinity) : undefined;
         const coordinates = readCoordinates(crsIn, crsOut, coordsIn, extent);
         if (filteringExtent && !filteringExtent.isPointInside(coordinates[0])) {
             return;
         }
 
-        if (asElement) {
-            return { vertices: coordinates, extent };
-        }
-
-        return {
-            type: 'linestring',
-            elements: [
-                { vertices: coordinates, extent },
-            ],
-        };
+        return [
+            { vertices: coordinates, extent },
+        ];
     },
     multi(type, crsIn, crsOut, coordsIn, filteringExtent, options) {
         if (coordsIn.length == 1) {
             return this[type](crsIn, crsOut, coordsIn[0], filteringExtent, options);
         }
 
-        const multis = {
-            type: `multi${type}`,
-            elements: [],
-        };
+        const multis = [];
         for (const mu of coordsIn) {
-            const m = this[type](crsIn, crsOut, mu, filteringExtent, options, true);
+            const m = this[type](crsIn, crsOut, mu, filteringExtent, options)[0];
             if (!m) {
                 return;
             }
             filteringExtent = undefined;
-            multis.elements.push(m);
-            if (options.buildExtent) {
-                multis.extent = multis.extent || m.extent;
-                multis.extent.union(m.extent);
-            }
+            multis.push(m);
         }
         return multis;
     },
@@ -178,12 +150,22 @@ function readFeature(crsIn, crsOut, json, filteringExtent, options) {
     if (options.filter && !options.filter(json.properties)) {
         return;
     }
-    const feature = {};
-    feature.geometry = readGeometry(crsIn, crsOut, json.geometry, filteringExtent, options);
+    const feature = {
+        type: json.geometry.type.toLowerCase(),
+    };
 
+    feature.geometry = readGeometry(crsIn, crsOut, json.geometry, filteringExtent, options);
     if (!feature.geometry) {
         return;
     }
+
+    if (options.buildExtent) {
+        for (const g of feature.geometry) {
+            feature.extent = feature.extent || g.extent;
+            feature.extent.union(g.extent);
+        }
+    }
+
     feature.properties = json.properties || {};
     // copy other properties
     for (const key of Object.keys(json)) {
@@ -196,22 +178,24 @@ function readFeature(crsIn, crsOut, json, filteringExtent, options) {
 }
 
 function readFeatureCollection(crsIn, crsOut, json, filteringExtent, options) {
-    const collec = [];
+    const res = {
+        collection: [],
+    };
 
     for (const feature of json.features) {
         const f = readFeature(crsIn, crsOut, feature, filteringExtent, options);
         if (f) {
             if (options.buildExtent) {
-                if (collec.extent) {
-                    collec.extent.union(f.geometry.extent);
+                if (res.extent) {
+                    res.extent.union(f.extent);
                 } else {
-                    collec.extent = f.geometry.extent.clone();
+                    res.extent = f.extent.clone();
                 }
             }
-            collec.push(f);
+            res.collection.push(f);
         }
     }
-    return collec;
+    return res;
 }
 
 /**
@@ -231,10 +215,6 @@ export default {
      * @typedef FeatureGeometry
      * @type {Object}
      *
-     * @property {string} type - Geometry type, can be <code>point</code>,
-     * <code>multipoint</code>, <code>linestring</code>,
-     * <code>multilinestring</code>, <code>polygon</code> or
-     * <code>multipolygon</code>.
      * @property {Coordinates[]} vertices - All the vertices of the geometry.
      * @property {?number[]} contour - If this geometry is a
      * <code>polygon</code>, <code>contour</code> contains the indices that
@@ -242,8 +222,9 @@ export default {
      * @property {?Array} holes - If this geometry is a <code>polygon</code>,
      * <code>holes</code> contains an array of indices representing holes in the
      * polygon.
-     * @property {?Extent} extent - The 2D extent containing all the geometries.
-    */
+     * @property {?Extent} extent - The 2D extent containing all the points
+     * composing the geometry.
+     */
 
     /**
      * Similar to a feature in a GeoJSON, but adapted to iTowns.
@@ -251,13 +232,31 @@ export default {
      * @typedef Feature
      * @type {Object}
      *
-     * @property {FeatureGeometry|FeatureGeometry[]} geometry - The feature's
-     * geometry. Can be a [FeatureGeometry]{@link
-     * module:GeoJsonParser~FeatureGeometry} or an array of FeatureGeometry.
+     * @property {string} type - Geometry type, can be <code>point</code>,
+     * <code>multipoint</code>, <code>linestring</code>,
+     * <code>multilinestring</code>, <code>polygon</code> or
+     * <code>multipolygon</code>.
+     * @property {FeatureGeometry[]} geometry - The feature's geometry, as an
+     * array of [FeatureGeometry]{@link module:GeoJsonParser~FeatureGeometry}.
      * @property {Object} properties - Properties of the features. It can be
      * anything specified in the GeoJSON under the <code>properties</code>
      * property.
-    */
+     * @property {Extent?} extent - The 2D extent containing all the geometries
+     * composing the feature.
+     */
+
+    /**
+     * An object regrouping a list of [features]{@link
+     * module:GeoJsonParser~Feature} and the extent of this collection.
+     *
+     * @typedef FeatureCollection
+     * @type {Object}
+     *
+     * @property {Feature[]} collection - The array of features composing the
+     * collection.
+     * @property {Extent?} extent - The 2D extent containing all the features
+     * composing the collection.
+     */
 
     /**
      * Parse a GeoJSON file content and return a [Feature]{@link
@@ -275,7 +274,8 @@ export default {
      * @param {function} [options.filter] - Filter function to remove features
      *
      * @return {Promise} A promise resolving with a [Feature]{@link
-     * module:GeoJsonParser~Feature} or an array of Features.
+     * module:GeoJsonParser~Feature} or [FeatureCollection]{@link
+     * module:GeoJsonParser~FeatureCollection}.
      */
     parse(json, options = {}) {
         const crsOut = options.crsOut;
