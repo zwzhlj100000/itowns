@@ -33,11 +33,8 @@ void main() {
         gl_PointSize = size;
     } else {
         // automatic sizing
-        float pointSize = 1.0;
         float slope = tan(1.0 / 2.0);
         float projFactor =  -0.5 * resolution.y / (slope * mvPosition.z);
-
-        float z = min(0.5 * -gl_Position.z / gl_Position.w, 1.0);
         gl_PointSize = max(3.0, min(10.0, 0.05 * projFactor));
     }
 
